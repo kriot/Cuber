@@ -1,13 +1,54 @@
+import logging.config
 import click
-import workflow
 import logging
 import numbers
-import config
+import os.path
 
+import workflow
 
 @click.command()
 @click.argument('workflow_file')
-def main(workflow_file):
+@click.option('--tg_chat', default = None, help = 'Telegram chat_id for logging')
+@click.option('--tg_token', default = None, help = 'Telegram token for logging')
+def main(workflow_file, tg_chat, tg_token):
+    if tg_chat is None:
+        config_file = '{}/.cuber'.format(os.path.expanduser("~"))
+        if os.path.isfile(config_file):
+            tg_token, tg_chat = open(config_file).read().split('\n')[0:2]
+            tg_chat = int(tg_chat)
+            print 'tg'
+
+    logging_handlers = {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console'
+        },
+    }
+
+    if tg_chat is not None:
+        logging_handlers['telegram'] = {
+            'class': 'telegram_handler.TelegramHandler',
+            'token': tg_token,
+            'chat_id': tg_chat,
+            'level': 'CRITICAL',
+        }
+
+    logging.config.dictConfig({
+        'version': 1,
+        'handlers': logging_handlers,
+        "loggers": {
+            "": {
+                "level": "DEBUG",
+                "handlers": ['console'] + (['telegram'] if tg_chat is not None else []),
+                "propagate": "no"
+            }
+        },
+        'formatters': {
+            'console': {
+                'format': '%(levelname)s: %(asctime)s ::: %(name)-10s: %(message)s (%(filename)s:%(lineno)d)',
+            }
+        }
+    })
     try:
         wf = workflow.Workflow(workflow_file)
         data = wf.run()
