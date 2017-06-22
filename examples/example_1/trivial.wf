@@ -3,7 +3,7 @@
         "module": "cube_trivial",
         "class": "CubeTrivial",
         "attrs": {
-            "param": 7
+            "param": 5
         }
     },
     "main": "my_trivial_subgraph"
