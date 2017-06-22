@@ -1,2 +1,3 @@
 *.pyc
 cuber.egg-info
+dist
