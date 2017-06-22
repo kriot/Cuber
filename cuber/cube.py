@@ -13,12 +13,15 @@ class Cube(object):
         return
 
     def get(self):
-        pickle_name = 'checkpoints/{}.pkl'.format(self.name())
+        path_dir = 'checkpoints/'
+        pickle_name = '{}{}.pkl'.format(path_dir, self.name())
         logger.info('Pickle name: {}'.format(pickle_name))
         if not os.path.isfile(pickle_name):
             logger.info('Cache is not ok. Evaluating...')
             data = self.eval()
             logger.info('Writing cache')
+            if not os.path.isdir(path_dir):
+                os.makedirs(path_dir)
             with open(pickle_name, 'wb') as f:
                 pickle.dump(data, f)
         else:
