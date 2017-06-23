@@ -10,9 +10,17 @@ class Cube(object):
 
     @abc.abstractmethod
     def name(self):
+        '''
+            Unique name for cube and params. This name is key for cache.
+        '''
         return
 
     def get(self):
+        '''
+            Checks if there is a cached verison and loads it.
+            If there is no cached version, runs calcualtions via eval function.
+            If you want to get cube's result, use only this function.
+        '''
         path_dir = 'checkpoints/'
         pickle_name = '{}{}.pkl'.format(path_dir, self.name())
         logger.info('Pickle name: {}'.format(pickle_name))
@@ -34,4 +42,7 @@ class Cube(object):
 
     @abc.abstractmethod
     def eval(self):
+        '''
+            This method should contain meaningful calculations. It have to return dict with result.
+        '''
         return
