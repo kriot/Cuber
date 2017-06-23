@@ -1,14 +1,26 @@
 {
-    "dataset": {
-        "module": "cube_gen_data",
-        "class": "CubeGenData",
+    "dataset":{
+        "module": "cube_split_train_test",
+        "class": "CubeSplitTrainTest",
         "attrs": {
-            "a": 1.4,
-            "b": 0.3,
-            "noise": 0.3,
-            "n": 10,
+            "test_ratio": 0.3,
             "seed": 0
-        }
+        },
+        "deps": [
+            {
+                "graph": {
+                    "module": "cube_gen_data",
+                    "class": "CubeGenData",
+                    "attrs": {
+                        "a": 1.4,
+                        "b": 0.3,
+                        "noise": 0.3,
+                        "n": 40,
+                        "seed": 0
+                    }
+                }
+            }
+        ]
     },
     "applied_trained_model":
     {
@@ -17,7 +29,7 @@
         "deps": [
             {
                 "fields": {
-                    "X": "X"
+                    "X": "X_test"
                 },
                 "graph": "dataset"
             },
@@ -32,8 +44,8 @@
                     "deps": [
                         {
                             "fields": {
-                                "X": "X",
-                                "y": "y"
+                                "X": "X_train",
+                                "y": "y_train"
                             },
                             "graph": "dataset"
                         }
@@ -54,7 +66,7 @@
             },
             {
                 "fields": {
-                    "real": "y"
+                    "real": "y_test"
                 },
                 "graph": "dataset"
             }

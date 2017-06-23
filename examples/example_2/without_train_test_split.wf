@@ -1,0 +1,64 @@
+{
+    "dataset": {
+        "module": "cube_gen_data",
+        "class": "CubeGenData",
+        "attrs": {
+            "a": 1.4,
+            "b": 0.3,
+            "noise": 0.3,
+            "n": 40,
+            "seed": 0
+        }
+    },
+    "applied_trained_model":
+    {
+        "module": "cube_apply_model",
+        "class": "CubeApplyModel",
+        "deps": [
+            {
+                "fields": {
+                    "X": "X"
+                },
+                "graph": "dataset"
+            },
+            {
+                "graph": {
+                    "module": "cube_train_model",
+                    "class": "CubeTrainModel",
+                    "attrs": {
+                        "model_module": "linear_model",
+                        "model_class": "LinearModel"
+                    },
+                    "deps": [
+                        {
+                            "fields": {
+                                "X": "X",
+                                "y": "y"
+                            },
+                            "graph": "dataset"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metrics": {
+        "module": "cube_rmse",
+        "class": "CubeRMSE",
+        "deps": [
+            {
+                "fields": {
+                    "prediction": "prediction"
+                },
+                "graph": "applied_trained_model"
+            },
+            {
+                "fields": {
+                    "real": "y"
+                },
+                "graph": "dataset"
+            }
+        ]
+    },
+    "main": "metrics"
+}
