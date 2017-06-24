@@ -49,7 +49,7 @@ def main(workflow_file, tg_chat, tg_token):
             }
         }
     })
-    if workflow_file.ends_with('.wf'):
+    if workflow_file.endswith('.wf'):
         try:
             wf = workflow.Workflow(workflow_file)
             data = wf.run()
@@ -65,7 +65,7 @@ def main(workflow_file, tg_chat, tg_token):
             import traceback
             traceback.print_exc()
             logging.critical('Calculation is failed')
-    elif workflow_file.ends_with('.pkl'):
+    elif workflow_file.endswith('.pkl'):
         with open(workflow_file, 'rb') as f:
             data = pickle.load(f)
         print data
