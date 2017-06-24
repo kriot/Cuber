@@ -49,21 +49,28 @@ def main(workflow_file, tg_chat, tg_token):
             }
         }
     })
-    try:
-        wf = workflow.Workflow(workflow_file)
-        data = wf.run()
-        res = '{}:\n'.format(workflow_file)
-        for key, value in data.iteritems():
-            if isinstance(value, str) or isinstance(value, numbers.Number):
-                print '{}: {}'.format(key, value)
-                res += '{}: {}\n'.format(key, value)
-            else:
-                print '{}: ...'.format(key)
-        logging.critical(res)
-    except:
-        import traceback
-        traceback.print_exc()
-        logging.critical('Calculation is failed')
+    if workflow_file.ends_with('.wf'):
+        try:
+            wf = workflow.Workflow(workflow_file)
+            data = wf.run()
+            res = '{}:\n'.format(workflow_file)
+            for key, value in data.iteritems():
+                if isinstance(value, str) or isinstance(value, numbers.Number):
+                    print '{}: {}'.format(key, value)
+                    res += '{}: {}\n'.format(key, value)
+                else:
+                    print '{}: ...'.format(key)
+            logging.critical(res)
+        except:
+            import traceback
+            traceback.print_exc()
+            logging.critical('Calculation is failed')
+    elif workflow_file.ends_with('.pkl'):
+        with open(workflow_file, 'rb') as f:
+            data = pickle.load(f)
+        print data
+    else:
+        raise ValueError('Unknown file type (.wf and .pkl are supported')
 
 if __name__ == '__main__':
     main()
