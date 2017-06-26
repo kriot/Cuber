@@ -3,6 +3,7 @@ import click
 import logging
 import numbers
 import os.path
+import cPickle as pickle
 
 import workflow
 

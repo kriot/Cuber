@@ -1,4 +1,5 @@
 import logging
+import json
 import numpy as np
 logger = logging.getLogger(__name__)
 
@@ -18,3 +19,5 @@ def universal_hash(obj):
             return hash(obj.tostring())
         raise NotImplementedError()
 
+def json_hash(obj):
+    return hash(json.dumps(obj))
