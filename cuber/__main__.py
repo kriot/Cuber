@@ -4,6 +4,7 @@ import logging
 import numbers
 import os.path
 import cPickle as pickle
+import time
 
 import workflow
 
@@ -11,9 +12,10 @@ import workflow
 @click.argument('workflow_file')
 @click.option('--tg_chat', default = None, help = 'Telegram chat_id for logging')
 @click.option('--tg_token', default = None, help = 'Telegram token for logging')
-def main(workflow_file, tg_chat, tg_token):
+@click.option('--full_result', default = False, is_flag=True)
+def main(workflow_file, tg_chat, tg_token, full_result):
     if tg_chat is None:
-        config_file = '{}/.cuber'.format(os.path.expanduser("~"))
+        config_file = '.cuber'
         if os.path.isfile(config_file):
             tg_token, tg_chat = open(config_file).read().split('\n')[0:2]
             tg_chat = int(tg_chat)
@@ -50,22 +52,29 @@ def main(workflow_file, tg_chat, tg_token):
             }
         }
     })
+    start_time = time.time()
     if workflow_file.endswith('.wf'):
         try:
             wf = workflow.Workflow(workflow_file)
             data = wf.run()
             res = '{}:\n'.format(workflow_file)
             for key, value in data.iteritems():
-                if isinstance(value, str) or isinstance(value, numbers.Number):
+                if full_result or isinstance(value, str) or isinstance(value, numbers.Number):
                     print '{}: {}'.format(key, value)
                     res += '{}: {}\n'.format(key, value)
                 else:
                     print '{}: ...'.format(key)
-            logging.critical(res)
+            if time.time() - start_time > 60 * 3:
+                logging.critical('Calculation is done: {}\n{}'.format(workflow_file, res))
+            else:
+                logging.info('Calculation is done: {}\n{}'.format(workflow_file, res))
         except:
             import traceback
             traceback.print_exc()
-            logging.critical('Calculation is failed')
+            if time.time() - start_time > 60 * 3:
+                logging.critical('Calculation is failed: {}'.format(workflow_file))
+            else:
+                logging.error('Calculation is failed: {}'.format(workflow_file))
     elif workflow_file.endswith('.pkl'):
         with open(workflow_file, 'rb') as f:
             data = pickle.load(f)
