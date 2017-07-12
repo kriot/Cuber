@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 class Cube(object):
     __metaclass__  = abc.ABCMeta
 
+    checkpoints_dir = 'checkpoints/'
+
     @abc.abstractmethod
     def name(self):
         '''
@@ -21,15 +23,14 @@ class Cube(object):
             If there is no cached version, runs calcualtions via eval function.
             If you want to get cube's result, use only this function.
         '''
-        path_dir = 'checkpoints/'
-        pickle_name = '{}{}.pkl'.format(path_dir, self.name())
+        pickle_name = '{}{}.pkl'.format(Cube.checkpoints_dir, self.name())
         logger.info('Pickle name: {}'.format(pickle_name))
         if not os.path.isfile(pickle_name):
             logger.info('Cache is not ok. Evaluating...')
             data = self.eval()
             logger.info('Writing cache')
-            if not os.path.isdir(path_dir):
-                os.makedirs(path_dir)
+            if not os.path.isdir(Cube.checkpoints_dir):
+                os.makedirs(Cube.checkpoints_dir)
             with open(pickle_name, 'wb') as f:
                 pickle.dump(data, f)
         else:

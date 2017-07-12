@@ -1,0 +1,5 @@
+[cuber]
+checkpoints_dir = checkp
+message_delay = 1
+
+[telegram]

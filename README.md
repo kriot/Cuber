@@ -9,6 +9,22 @@
 
 Also, you may use cubes separately. You need just call `MyCube(params_of_the_cube).get()`. It will load the cached result, if it exist, or make a calculations. The result is equal to result of fucntion `eval`.
 
+# Config
+You are able to specify config with `.cuber` file in current (`cd`) directory.
+
+* Specifeing checkpoints folder makes you able to use checkpoints in common. It is usefull for server-based development of ML.
+* Message delay: cuber will send message if graph is done or failed, but only if there is `message_delay` minutes form start. It is useful for not-spamming at testing.
+
+Example:
+```
+[cuber]
+checkpoints_dir = /olo/common/checkpoints_for_our_common_project
+message_delay = 3
+[telegram]
+token = ...
+chat_id = ...
+```
+
 # Cube development
 Suggestion: make .py file per each cube and name is `cube_<smth>.py` and name class `Cube<Smth>`. Then it would be easier to write configurations.
 Cube is an abstract evaluation result. It may be iterpreted like a function.
