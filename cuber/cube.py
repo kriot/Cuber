@@ -23,7 +23,7 @@ class Cube(object):
             If there is no cached version, runs calcualtions via eval function.
             If you want to get cube's result, use only this function.
         '''
-        pickle_name = '{}{}.pkl'.format(Cube.checkpoints_dir, self.name())
+        pickle_name = os.path.join(Cube.checkpoints_dir, '{}.pkl'.format(self.name()))
         logger.info('Pickle name: {}'.format(pickle_name))
         if not os.path.isfile(pickle_name):
             logger.info('Cache is not ok. Evaluating...')
