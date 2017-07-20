@@ -112,6 +112,7 @@ class Main():
             (datetime.datetime.now().date().isoformat(), self.workflow_file, datetime.datetime.now().isoformat(), 'register', self.graph, self.comment)
         )
         self.db_id = c.lastrowid
+        logging.info('Graph ID: {}'.format(self.db_id))
         self.db_connect.commit()
         logging.info('DB: registered')
 
@@ -178,11 +179,18 @@ class Main():
 
         self.db_register()
 
+        message_delay = 60 * float(self.config.get('cuber', 'message_delay', fallback = 3))
+
+        job_descritpion = '{}; {}'.format(workflow_file, self.comment)
+
         try:
             cube.Cube.checkpoints_dir = self.checkpoints_dir
             logging.info('Checkpoints dir: {}'.format(cube.Cube.checkpoints_dir))
             wf = workflow.Workflow(workflow_file)
+
+            self.db_update_status('running')
             data = wf.run()
+
             res = '{}:\n'.format(workflow_file)
             for key, value in data.iteritems():
                 if full_result or isinstance(value, str) or isinstance(value, numbers.Number):
@@ -190,19 +198,25 @@ class Main():
                 else:
                     res += '{}: ...\n'.format(key)
 
-            if time.time() - start_time >= 60 * float(self.config.get('cuber', 'message_delay', fallback = 3)):
-                logging.critical('Calculation is done: {}\n{}'.format(workflow_file, res))
+            if time.time() - start_time >= message_delay:
+                logging.critical('Calculation is done: {}\n{}'.format(job_descritpion, res))
             else:
-                logging.info('Calculation is done: {}\n{}'.format(workflow_file, res))
+                logging.info('Calculation is done: {}\n{}'.format(job_descritpion, res))
             self.db_save_result(res)
             self.db_update_status('done')
+        except KeyboardInterrupt:
+            if time.time() - start_time >= message_delay:
+                logging.critical('Calculation is cancelled: {}'.format(job_descritpion))
+            else:
+                logging.error('Calculation is cancelled: {}'.format(job_descritpion))
+            self.db_update_status('cancelled')
         except:
             import traceback
             traceback.print_exc()
-            if time.time() - start_time >= 60 * float(self.config.get('cuber', 'message_delay', fallback = 3)):
-                logging.critical('Calculation is failed: {}'.format(workflow_file))
+            if time.time() - start_time >= message_delay:
+                logging.critical('Calculation is failed: {}'.format(job_descritpion))
             else:
-                logging.error('Calculation is failed: {}'.format(workflow_file))
+                logging.error('Calculation is failed: {}'.format(job_descritpion))
             self.db_update_status('failed')
 
     def print_pickle(self, pickle_file):
