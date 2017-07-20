@@ -164,7 +164,7 @@ class Main():
         '''
             SELECT id, graph, file, start_time, end_time, status, comment, result FROM graphs WHERE id = ?
         ''',
-            db_id
+            (db_id, )
         )
         for row in res:
             print '\n'.join(map(str, row))
