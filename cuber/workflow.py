@@ -7,7 +7,7 @@ from functools32 import lru_cache
 logger = logging.getLogger(__name__)
 
 class Workflow():
-    def __init__(self, workflow_file):
+    def __init__(self, workflow_file = None, graph = None):
         '''
         Example:
         {
@@ -34,10 +34,17 @@ class Workflow():
             ]
         }
         '''
-        with open(workflow_file) as f:
-            graph_json = f.read()
-        logger.debug('Graph json: {}'.format(graph_json))
-        self.graph = json.loads(graph_json)
+        if workflow_file is not None:
+            with open(workflow_file) as f:
+                graph_json = f.read()
+            logger.debug('Graph json: {}'.format(graph_json))
+            self.graph = json.loads(graph_json)
+        elif isinstance(graph, basestring):
+            graph_json = graph
+            logger.debug('Graph json: {}'.format(graph_json))
+            self.graph = json.loads(graph_json)
+        else:
+            self.graph = graph
 
     def get_graph(self, name):
         return self.graph[name]

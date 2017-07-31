@@ -1,0 +1,14 @@
+{
+    "graph_file": "main.wf",
+    "params": {
+        "target": "f",
+        "vars": {
+            "param1": {
+                "bounds": [-10, 10]
+            },
+            "param2": {
+                "bounds": [-10, 10]
+            }
+        }
+    }
+}

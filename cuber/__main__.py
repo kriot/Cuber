@@ -8,9 +8,15 @@ import time
 import configparser
 import sqlite3
 import datetime
+import json
 
 import workflow
 import cube
+import hyper_optimizer
+
+logging.basicConfig(level=logging.INFO,
+                            format='%(levelname)s: %(asctime)s ::: %(name)s: %(message)s (%(filename)s:%(lineno)d)',
+                                                datefmt='%Y-%m-%d %H:%M:%S')
 
 def setup_logging(tg_chat, tg_token):
     if tg_chat is not None:
@@ -63,15 +69,17 @@ class Main():
 
         self.checkpoints_dir = self.config.get('cuber', 'checkpoints_dir', fallback = './checkpoints/')
 
-        setup_logging(
-            self.config.get('telegram', 'chat_id', fallback = None),
-            self.config.get('telegram', 'token', fallback = None),
-        )
+#        setup_logging(
+#            self.config.get('telegram', 'chat_id', fallback = None),
+#            self.config.get('telegram', 'token', fallback = None),
+#        )
 
         if argument.endswith('.wf'):
             self.run_graph(argument, full_result)
         elif argument.endswith('.pkl'):
             self.print_pickle(argument)
+        elif argument.endswith('.optimize'):
+            self.optimize(argument)
         elif argument == 'show':
             self.setup_db()
             self.db_show()
@@ -223,6 +231,21 @@ class Main():
         with open(workflow_file, 'rb') as f:
             data = pickle.load(f)
         print data
+
+    def optimize(self, optimize_file):
+        with open(optimize_file) as f:
+            optimize_json = f.read()
+        optimize = json.loads(optimize_json)
+
+        with open(optimize['graph_file']) as f:
+            graph = f.read()
+        ho = hyper_optimizer.HyperOptimizer(
+                optimization_field = optimize['target'],
+                graph = graph,
+                optimization_params = optimize['params'],
+            )
+        result = ho.optimize()
+        logging.info('Optimisation result: {}'.format(result))
 
 @click.command()
 @click.argument('workflow_file')
