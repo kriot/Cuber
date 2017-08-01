@@ -204,7 +204,7 @@ def cli():
 @click.argument('workflow_file')
 @click.option('--full_result', default = False, is_flag=True)
 @click.option('--comment', default = '')
-def run(workflow_file, full_result, no_db, comment):
+def run(workflow_file, full_result, comment):
     Main().run_graph(workflow_file, full_result, comment)
 
 @cli.command()
