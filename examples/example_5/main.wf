@@ -1,0 +1,34 @@
+{
+    "main": {
+        "module": "cuber.cube_idle",
+        "class": "CubeIdle",
+        "deps": [
+            {
+                "fields": {
+                    "f1": "f"
+                },
+                "graph": {
+                    "module": "cube_function",
+                    "class": "CubeFunction",
+                    "attrs": {
+                        "arg": 0.1,
+                        "reg": 2
+                    }
+                }
+            },
+            {
+                "fields": {
+                    "f2": "f"
+                },
+                "graph": {
+                    "module": "cube_function",
+                    "class": "CubeFunction",
+                    "attrs": {
+                        "arg": 0.3,
+                        "reg": 4.5
+                    }
+                }
+            }
+        ]
+    }
+}
