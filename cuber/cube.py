@@ -27,8 +27,8 @@ class Cube(object):
         '''
         # try load form memory
         cached, cached_data = cache.Cache().get(self.name())
-        logger.info('Cache result: {} {}'.format(cached, cached_data))
         if cached:
+            logger.info('Loaded from in-memory cache')
             return cached_data
 
         # try load from file, else evaluate result
