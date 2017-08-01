@@ -59,41 +59,21 @@ def setup_logging(tg_chat, tg_token):
     })
 
 class Main():
-    def __init__(self, argument, full_result, no_db, comment = ''):
-        self.no_db = no_db
-        self.comment = comment
-
+    def __init__(self):
         config_file = '.cuber'
         self.config = configparser.ConfigParser()
         self.config.read(config_file)
 
         self.checkpoints_dir = self.config.get('cuber', 'checkpoints_dir', fallback = './checkpoints/')
 
+        self.setup_db()
+
 #        setup_logging(
 #            self.config.get('telegram', 'chat_id', fallback = None),
 #            self.config.get('telegram', 'token', fallback = None),
 #        )
 
-        if argument.endswith('.wf'):
-            self.run_graph(argument, full_result)
-        elif argument.endswith('.pkl'):
-            self.print_pickle(argument)
-        elif argument.endswith('.optimize'):
-            self.optimize(argument)
-        elif argument == 'show':
-            self.setup_db()
-            self.db_show()
-        elif argument.startswith('detailed'):
-            self.setup_db()
-            self.db_show_detailed(argument[len('detailed'):])
-        else:
-            raise ValueError('Unknown file type (.wf and .pkl are supported')
-
     def setup_db(self):
-        if self.no_db:
-            self.db_connect = None
-            return
-
         path = os.path.abspath(self.checkpoints_dir)
         if not os.path.isdir(path):
             os.makedirs(path)
@@ -110,8 +90,6 @@ class Main():
         logging.info('DB: prepared')
 
     def db_register(self):
-        if self.no_db:
-            return
         c = self.db_connect.cursor()
         c.execute(
         '''
@@ -125,8 +103,6 @@ class Main():
         logging.info('DB: registered')
 
     def db_update_status(self, status):
-        if self.no_db:
-            return
         c = self.db_connect.cursor()
         c.execute(
         '''
@@ -138,8 +114,6 @@ class Main():
         logging.info('DB: status updated')
 
     def db_save_result(self, result):
-        if self.no_db:
-            return
         c = self.db_connect.cursor()
         c.execute(
         '''
@@ -151,9 +125,6 @@ class Main():
         logging.info('DB: result saved')
 
     def db_show(self):
-        if self.no_db:
-            raise ValueError('You want to show db results, without db...')
-
         c = self.db_connect.cursor()
         res = c.execute(
         '''
@@ -164,9 +135,6 @@ class Main():
             print '\t'.join(map(str, row))
 
     def db_show_detailed(self, db_id):
-        if self.no_db:
-            raise ValueError('You want to show db results, without db...')
-
         c = self.db_connect.cursor()
         res = c.execute(
         '''
@@ -177,11 +145,11 @@ class Main():
         for row in res:
             print '\n'.join(map(str, row))
 
-    def run_graph(self, workflow_file, full_result):
+    def run_graph(self, workflow_file, full_result, comment):
         self.workflow_file = workflow_file
+        self.comment = comment
         start_time = time.time()
 
-        self.setup_db()
         with open(workflow_file) as f:
             self.graph = f.read()
 
@@ -227,33 +195,49 @@ class Main():
                 logging.error('Calculation is failed: {}'.format(job_descritpion))
             self.db_update_status('failed')
 
-    def print_pickle(self, pickle_file):
-        with open(workflow_file, 'rb') as f:
-            data = pickle.load(f)
-        print data
 
-    def optimize(self, optimize_file):
-        with open(optimize_file) as f:
-            optimize_json = f.read()
-        optimize = json.loads(optimize_json)
+@click.group()
+def cli():
+    pass
 
-        with open(optimize['graph_file']) as f:
-            graph = f.read()
-        ho = hyper_optimizer.HyperOptimizer(
-                optimization_field = optimize['target'],
-                graph = graph,
-                optimization_params = optimize['params'],
-            )
-        result = ho.optimize()
-        logging.info('Optimisation result: {}'.format(result))
-
-@click.command()
+@cli.command()
 @click.argument('workflow_file')
 @click.option('--full_result', default = False, is_flag=True)
-@click.option('--no_db', default = False, is_flag=True)
 @click.option('--comment', default = '')
-def main(workflow_file, full_result, no_db, comment):
-    Main(workflow_file, full_result, no_db, comment)
+def run(workflow_file, full_result, no_db, comment):
+    Main().run_graph(workflow_file, full_result, comment)
+
+@cli.command()
+@click.argument('pickle_file')
+def print_pickle(pickle_file):
+    with open(pickle_file, 'rb') as f:
+        data = pickle.load(f)
+    print data
+
+@cli.command()
+@click.argument('optimize_file')
+def optimize(optimize_file):
+    with open(optimize_file) as f:
+        optimize_json = f.read()
+    optimize = json.loads(optimize_json)
+
+    with open(optimize['graph_file']) as f:
+        graph = f.read()
+    ho = hyper_optimizer.HyperOptimizer(
+            graph = graph,
+            optimization_params = optimize['params'],
+        )
+    result = ho.optimize()
+    logging.info('Optimisation result: {}'.format(result))
+
+@cli.command()
+def show():
+    Main().db_show()
+
+@cli.command()
+@click.argument('graph_id')
+def detailed(graph_id):
+    Main().db_show_detailed(graph_id)
 
 if __name__ == '__main__':
-    main()
+    cli()
