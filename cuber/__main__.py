@@ -215,20 +215,51 @@ def print_pickle(pickle_file):
     print data
 
 @cli.command()
-@click.argument('optimize_file')
-def optimize(optimize_file):
-    with open(optimize_file) as f:
-        optimize_json = f.read()
-    optimize = json.loads(optimize_json)
+@click.option('--opt_id', default = None)
+@click.argument('optimize_file', required=False)
+def optimize(optimize_file, opt_id):
+    if opt_id is not None:
+        ho = hyper_optimizer.HyperOptimizer(
+                optimize_id = opt_id
+            )
+    else:
+        with open(optimize_file) as f:
+            optimize_json = f.read()
+        optimize = json.loads(optimize_json)
 
-    with open(optimize['graph_file']) as f:
-        graph = f.read()
-    ho = hyper_optimizer.HyperOptimizer(
-            graph = graph,
-            optimization_params = optimize['params'],
-        )
+        with open(optimize['graph_file']) as f:
+            graph = f.read()
+        ho = hyper_optimizer.HyperOptimizer(
+                graph = graph,
+                optimization_params = optimize['params'],
+            )
     result = ho.optimize()
-    logging.info('Optimisation result: {}'.format(result))
+    logging.info('optimisation result: {}'.format(result))
+
+@cli.command()
+@click.option('--opt_id', default = None)
+def optimize_show(opt_id):
+    db_connect = sqlite3.connect('optimizer.db')
+    if opt_id is None:
+        c = db_connect.cursor()
+        res = c.execute(
+        '''
+            SELECT optimize_id, start_time, params, comment FROM optimizers
+        ''',
+        )
+        for row in res:
+            print '\t'.join(map(str, row))
+    else:
+        c = db_connect.cursor()
+        res = c.execute(
+        '''
+            SELECT * FROM steps
+            WHERE optimize_id = ?
+        ''',
+            (opt_id, )
+        )
+        for row in res:
+            print '\t'.join(map(str, row))
 
 @cli.command()
 def show():

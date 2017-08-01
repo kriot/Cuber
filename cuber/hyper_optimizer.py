@@ -6,6 +6,7 @@ import logging
 import datetime
 import json
 import numpy as np
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +29,10 @@ class HyperOptimizerHandler():
         alpha: 6.1
     }
     '''
-    def __init__(self, optimize_id = None, graph = None, optimization_params = None, comment = ''):
+    def __init__(self, seed = 1, optimize_id = None, graph = None, optimization_params = None, comment = ''):
         self.setup_db()
+        random.seed(seed)
+        np.random.seed(seed)
         if optimize_id is not None:
             self.optimize_id = optimize_id
         else:
@@ -45,7 +48,7 @@ class HyperOptimizerHandler():
                              (optimize_id INTEGER PRIMARY KEY, graph text, params text, comment text, start_time text, end_time text, status text);
 
             CREATE TABLE IF NOT EXISTS steps
-                            (step_id Integer primiary key, optimize_id INTEGER, step_params text, result float)
+                            (step_id Integer primary key, optimize_id INTEGER, step_params text, result float)
 
             ''')
         self.db_connect.commit()
