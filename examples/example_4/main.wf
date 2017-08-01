@@ -3,8 +3,8 @@
         "module": "cube_function",
         "class": "CubeFunction",
         "attrs": {
-            "arg": "$param1",
-            "reg": "$param2"
+            "arg": $param1,
+            "reg": $param2
         }
     }
 }

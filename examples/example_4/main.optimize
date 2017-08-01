@@ -1,6 +1,7 @@
 {
     "graph_file": "main.wf",
     "params": {
+        "maximaize": "true",
         "target": "f",
         "vars": {
             "param1": {

@@ -156,6 +156,8 @@ class HyperOptimizer():
 
     def get_problem(self):
         params = self.handler.get_params()
+        for param in params.keys():
+            assert param in {'maximaize', 'vars', 'target'}
         bounds = [{'name': var, 'domain': var_params['bounds'], 'type': 'continuous'} for var, var_params in params['vars'].iteritems()]
 
         X = []
@@ -172,7 +174,9 @@ class HyperOptimizer():
         #logger.info('Bounds: {}'.format(bounds))
         #logger.info('History: {}'.format((X, Y)))
 
-        myProblem = GPyOpt.methods.BayesianOptimization(lambda X: self.eval_point(X[0]), bounds, X = X, Y = Y, exact_feval = True)
+        maximaize = params.get('maximaize', 'false') in ('true', 'yes', 't', 'y')
+
+        myProblem = GPyOpt.methods.BayesianOptimization(lambda X: self.eval_point(X[0]) * (-1. if maximaize else 1.), bounds, X = X, Y = Y, exact_feval = True)
         return myProblem
 
     def step(self):
