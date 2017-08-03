@@ -188,8 +188,8 @@ class HyperOptimizer():
         self.handler.update_history(myProblem.X, myProblem.Y)
         #logger.info('History2: {}'.format((myProblem.X, myProblem.Y)))
 
-    def optimize(self, n = 10):
-        for i in range(n):
+    def optimize(self, iters = 10):
+        for i in xrange(iters):
             logger.info('{} step'.format(i+1))
             self.step()
         myProblem = self.get_problem()

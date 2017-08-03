@@ -216,8 +216,9 @@ def print_pickle(pickle_file):
 
 @cli.command()
 @click.option('--opt_id', default = None)
+@click.option('--iters', default = 20)
 @click.argument('optimize_file', required=False)
-def optimize(optimize_file, opt_id):
+def optimize(optimize_file, iters, opt_id):
     if opt_id is not None:
         ho = hyper_optimizer.HyperOptimizer(
                 optimize_id = opt_id
@@ -233,7 +234,7 @@ def optimize(optimize_file, opt_id):
                 graph = graph,
                 optimization_params = optimize['params'],
             )
-    result = ho.optimize()
+    result = ho.optimize(iters = iters)
     logging.info('optimisation result: {}'.format(result))
 
 @cli.command()
