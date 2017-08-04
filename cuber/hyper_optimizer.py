@@ -151,6 +151,9 @@ class HyperOptimizer():
         self.optimization_field = self.handler.get_params()['target']
 
     def substitute_params(self, point):
+        '''
+        :param point: array of vars' values in order of dictionary
+        '''
         graph = self.handler.get_graph()
         for value, var in zip(point, self.handler.get_params()['vars'].keys()):
             graph = graph.replace('$' + var, str(value))
@@ -197,6 +200,27 @@ class HyperOptimizer():
 
         self.handler.update_history(myProblem.X, myProblem.Y)
         #logger.info('History2: {}'.format((myProblem.X, myProblem.Y)))
+
+    def add_point(self, point, value = None):
+        '''
+        :param point: dict: var -> val
+        '''
+        f_value = value # copy, because we use value as another variable
+        params = self.handler.get_params()
+        assert params['vars'].keys() == point.keys(), \
+                'Vars-list must be the same:\nhave: {}\nexpected: {}'.format(point.keys(), params['vars'].keys())
+
+        point_ = []
+        for var, value in point.iteritems():
+            point_.append(value)
+
+        if f_value is None:
+            logger.info('Value is None. Evaluating...')
+            f_value = self.eval_point(point_)
+            logger.info('Evaluated')
+
+        self.handler.save_result(point_, f_value)
+
 
     def optimize(self, iters = 10):
         for i in xrange(iters):

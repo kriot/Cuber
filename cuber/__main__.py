@@ -240,6 +240,17 @@ def optimize(optimize_file, iters, comment, opt_id):
     logging.info('optimisation result: {}'.format(result))
 
 @cli.command()
+@click.option('--opt_id', default = None, required = True)
+@click.option('--point', default = None, required = True, help = 'JSON formatted string {var: value, ...}')
+@click.option('--value', default = None, help = 'You may specify value of function at the point. Else the function will be evaluated.')
+def optimize_add_point(opt_id, point, value):
+    ho = hyper_optimizer.HyperOptimizer(
+            optimize_id = opt_id
+        )
+    ho.add_point(json.loads(point), value)
+    logging.info('Done')
+
+@cli.command()
 @click.option('--opt_id', default = None)
 def optimize_show(opt_id):
     db_connect = sqlite3.connect('optimizer.db')
