@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import workflow
 import sqlite3
 import GPy
@@ -117,20 +118,29 @@ class HyperOptimizerHandler():
         self.db_connect.commit()
         logger.info('Result saved')
 
-    def reset_history(self):
+    def deduplicate_history(self):
         c = self.db_connect.cursor()
         c.execute(
         '''
-            DELETE FROM steps WHERE optimize_id = ?
+        delete   from steps
+        where    rowid not in
+                 (
+                 select  min(rowid)
+                 from    steps
+                 group by
+                    step_params,
+                    result,
+                    optimize_id
+                 ) and optimize_id = ?
         ''',
             (self.optimize_id, )
         )
         self.db_connect.commit()
 
     def update_history(self, X, Y):
-        self.reset_history()
         for x, y in zip(X, Y):
             self.save_result(x, y[0])
+        self.deduplicate_history()
 
 class HyperOptimizer():
     def __init__(self, *args, **kwargs):
