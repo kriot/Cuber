@@ -216,7 +216,9 @@ class HyperOptimizer():
 
         if f_value is None:
             logger.info('Value is None. Evaluating...')
-            f_value = self.eval_point(point_)
+
+            maximaize = params.get('maximaize', 'false') in ('true', 'yes', 't', 'y')
+            f_value = self.eval_point(point_) * (-1. if maximaize else 1.)
             logger.info('Evaluated')
 
         self.handler.save_result(point_, f_value)
