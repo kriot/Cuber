@@ -67,10 +67,18 @@ class Workflow():
             res = self.__run_graph(dep['graph'])
             if 'fields' not in dep:
                 for key in res:
-                    attrs[dep.get('prefix', '') + key] = res[key]
+                    attr_key = dep.get('prefix', '') + key
+                    if attr_key in attrs:
+                        logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
+                        raise ValueError('Graph configuration error')
+                    attrs[attr_key] = res[key]
             else:
                 for new_key, old_key in dep['fields'].iteritems():
-                    attrs[dep.get('prefix', '') + new_key] = res[old_key]
+                    attr_key = dep.get('prefix', '') + new_key
+                    if attr_key in attrs:
+                        logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
+                        raise ValueError('Graph configuration error')
+                    attrs[attr_key] = res[old_key]
 
         module = importlib.import_module(graph_['module'])
         logger.debug('Attrs keys: {}'.format(attrs.keys()))
