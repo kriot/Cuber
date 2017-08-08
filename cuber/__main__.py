@@ -205,6 +205,9 @@ def cli():
 @click.option('--full_result', default = False, is_flag=True)
 @click.option('--comment', default = '')
 def run(workflow_file, full_result, comment):
+    """
+        Runs the workflow file (graph)
+    """
     Main().run_graph(workflow_file, full_result, comment)
 
 @cli.command()
@@ -220,6 +223,9 @@ def print_pickle(pickle_file):
 @click.option('--comment', default = '')
 @click.argument('optimize_file', required=False)
 def optimize(optimize_file, iters, comment, opt_id):
+    """
+        Creates a new optimization and starts it. If opt_id is specified, the passed optimization will be continued.
+    """
     if opt_id is not None:
         ho = hyper_optimizer.HyperOptimizer(
                 optimize_id = opt_id
@@ -244,6 +250,9 @@ def optimize(optimize_file, iters, comment, opt_id):
 @click.option('--point', default = None, required = True, help = 'JSON formatted string {var: value, ...}')
 @click.option('--value', default = None, help = 'You may specify value of function at the point. Else the function will be evaluated.')
 def optimize_add_point(opt_id, point, value):
+    """
+        Inserts users specified points to optimizer history. If you know attrs values, that prodice a good result, then this way you may suggest them to optimizer.
+    """
     ho = hyper_optimizer.HyperOptimizer(
             optimize_id = opt_id
         )
@@ -253,6 +262,9 @@ def optimize_add_point(opt_id, point, value):
 @cli.command()
 @click.option('--opt_id', default = None)
 def optimize_show(opt_id):
+    """
+        Shows the optimizations or the optimization's result (if opt_id is specified).
+    """
     db_connect = sqlite3.connect('optimizer.db')
     if opt_id is None:
         c = db_connect.cursor()
@@ -277,11 +289,17 @@ def optimize_show(opt_id):
 
 @cli.command()
 def show():
+    """
+        Shows the graphs run history.
+    """
     Main().db_show()
 
 @cli.command()
 @click.argument('graph_id')
 def detailed(graph_id):
+    """
+        Shows details of one of history graphs.
+    """
     Main().db_show_detailed(graph_id)
 
 if __name__ == '__main__':
