@@ -1,4 +1,5 @@
 import logging
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +26,12 @@ class Cache(Singleton, object):
             Status: bool. Is true, if key is stored
         '''
         if key in self.cache:
-            return (True, self.cache.get(key).get('value'))
+            return (True, copy.deepcopy(self.cache.get(key).get('value')))
         else:
             return (False, None)
 
     def add(self, key, value):
         self.cache[key] = {
-            'value': value
+            'value': copy.deepcopy(value)
         }
 
