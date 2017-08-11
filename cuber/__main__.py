@@ -60,18 +60,11 @@ def setup_logging(tg_chat, tg_token):
 
 class Main():
     def __init__(self):
-        config_file = '.cuber'
-        self.config = configparser.ConfigParser()
-        self.config.read(config_file)
 
-        self.checkpoints_dir = self.config.get('cuber', 'checkpoints_dir', fallback = './checkpoints/')
+        self.checkpoints_dir = config.get('cuber', 'checkpoints_dir', fallback = './checkpoints/')
 
         self.setup_db()
 
-#        setup_logging(
-#            self.config.get('telegram', 'chat_id', fallback = None),
-#            self.config.get('telegram', 'token', fallback = None),
-#        )
 
     def setup_db(self):
         path = os.path.abspath(self.checkpoints_dir)
@@ -155,7 +148,7 @@ class Main():
 
         self.db_register()
 
-        message_delay = 60 * float(self.config.get('cuber', 'message_delay', fallback = 3))
+        message_delay = 60 * float(config.get('cuber', 'message_delay', fallback = 3))
 
         job_descritpion = '{}; {}'.format(workflow_file, self.comment)
 
@@ -195,10 +188,26 @@ class Main():
                 logging.error('Calculation is failed: {}'.format(job_descritpion))
             self.db_update_status('failed')
 
+config = None
 
 @click.group()
 def cli():
-    pass
+    global config
+    config_file = '.cuber'
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    setup_logging(
+        config.get('telegram', 'chat_id', fallback = None),
+        config.get('telegram', 'token', fallback = None),
+    )
+
+@cli.command()
+def test_telegram():
+    """
+        Send telegram message with current config params
+    """
+    logging.critical('This is the test telegram message from cuber')
 
 @cli.command()
 @click.argument('workflow_file')
