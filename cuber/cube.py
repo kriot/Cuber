@@ -19,7 +19,7 @@ class Cube(object):
         '''
         return
 
-    def get(self):
+    def get(self, do_not_save_to_file = False):
         '''
             Checks if there is a cached verison and loads it.
             If there is no cached version, runs calcualtions via eval function.
@@ -37,6 +37,11 @@ class Cube(object):
         if not os.path.isfile(pickle_name):
             logger.info('Cache is not ok. Evaluating...')
             data = self.eval()
+
+            if do_not_save_to_file:
+                logger.info('Result is not saved because of flag do_not_save_to_file')
+                return data
+
             logger.info('Writing cache')
             if not os.path.isdir(Cube.checkpoints_dir):
                 os.makedirs(Cube.checkpoints_dir)
