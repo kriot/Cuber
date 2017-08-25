@@ -1,5 +1,6 @@
 {
     "dataset":{
+        "comment": "Example comment",
         "module": "cube_split_train_test",
         "class": "CubeSplitTrainTest",
         "attrs": {
@@ -8,6 +9,7 @@
         },
         "deps": [
             {
+                "comment": "We are going to split generated data",
                 "graph": {
                     "module": "cube_gen_data",
                     "class": "CubeGenData",
