@@ -53,17 +53,28 @@ class Workflow():
         return self.__run_graph('main')
 
     def __run_graph(self, graph_):
+        '''
+            TODO: improve excprions for incorrect graph
+        '''
         logger.info('Graph to do: {}'.format(graph_))
+
         if isinstance(graph_, basestring): # this is graph name
             logger.info('Go to {}'.format(graph_))
             return self.__run_graph(self.get_graph(graph_))
 
+        # required fields
+        for key in {'module', 'class'}:
+            assert key in graph_
+
         for key in graph_.keys():
-            assert key in {'attrs', 'deps', 'class', 'module'}
+            assert key in {'attrs', 'deps', 'class', 'module', 'comment'}
 
         attrs = copy.deepcopy(graph_.get('attrs', {}))
         logger.debug('Fixed attrs keys: {}'.format(attrs.keys()))
         for dep in graph_.get('deps', {}):
+            for key in dep.keys():
+                assert key in {'fields', 'graph', 'prefix', 'comment'}
+
             res = self.__run_graph(dep['graph'])
             if 'fields' not in dep:
                 for key in res:
