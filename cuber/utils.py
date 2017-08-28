@@ -19,6 +19,8 @@ def universal_hash(obj):
     try:
         return sha224(obj)
     except:
+        if isinstance(obj, unicode):
+            return sha224(obj.encode('utf-8'))
         if isinstance(obj, numbers.Number):
             return sha224(repr(obj))
         if isinstance(obj, dict):
@@ -33,6 +35,7 @@ def universal_hash(obj):
             return sha224(obj.tostring())
         if obj is None:
             return sha224('none' + 'salt123')
+        logger.error('Unsupported type: {}'.format(type(obj))) 
         raise NotImplementedError('Unspported type for hashing: {}. Object: {}'.format(type(obj), obj))
 
 def json_hash(obj):
