@@ -14,6 +14,7 @@ class Singleton(object):
 class Cache(Singleton, object):
     '''
     cache dict: key (cache) -> {'value': cached_value, another system info}
+    TODO: add immutable promise (that'll allow not to copy the item)
     '''
     def __init__(self):
         if 'cache' not in self.__dict__:
