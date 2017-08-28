@@ -19,17 +19,19 @@ class Cube(object):
         '''
         return
 
-    def get(self, do_not_save_to_file = False):
+    def get(self, do_not_save_to_file = False, disable_inmemory_cache = False):
         '''
             Checks if there is a cached verison and loads it.
             If there is no cached version, runs calcualtions via eval function.
             If you want to get cube's result, use only this function.
+            TODO: refactor this code
         '''
         # try load form memory
-        cached, cached_data = cache.Cache().get(self.name())
-        if cached:
-            logger.info('Loaded from in-memory cache')
-            return cached_data
+        if not disable_inmemory_cache:
+            cached, cached_data = cache.Cache().get(self.name())
+            if cached:
+                logger.info('Loaded from in-memory cache')
+                return cached_data
 
         # try load from file, else evaluate result
         pickle_name = os.path.join(Cube.checkpoints_dir, '{}.pkl'.format(self.name()))
@@ -53,7 +55,10 @@ class Cube(object):
         with open(pickle_name, 'rb') as f:
             data = pickle.load(f)
 
-        cache.Cache().add(self.name(), data)
+        # ERROR: inmemory cache is not used if pickle chache disabled
+
+        if not disable_inmemory_cache:
+            cache.Cache().add(self.name(), data)
 
         logger.info('Loaded')
         return data
