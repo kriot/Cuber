@@ -19,48 +19,61 @@ class Cube(object):
         '''
         return
 
-    def get(self, do_not_save_to_file = False, disable_inmemory_cache = False):
+    def get(self, disable_file_cache = False, disable_inmemory_cache = False):
         '''
             Checks if there is a cached verison and loads it.
             If there is no cached version, runs calcualtions via eval function.
             If you want to get cube's result, use only this function.
-            TODO: refactor this code
         '''
+        key = self.name() # hashing make take some time
+        logger.debug('Key: {}'.format(key))
+
+        data = None
+        data_done = False # flag the data is already got from cache
+        
+        # resources the data is already uploaded to
+        data_inmemory_cache = False
+        data_file_cache = False
+
         # try load form memory
-        if not disable_inmemory_cache:
-            cached, cached_data = cache.Cache().get(self.name())
-            if cached:
-                logger.info('Loaded from in-memory cache')
-                return cached_data
+        if not disable_inmemory_cache and not data_done:
+            cached, cached_data = cache.Cache().get(key)
+            if cached: # true, if object is found 
+                logger.debug('Loaded from in-memory cache')
+                data = cached_data
+                data_inmemory_cache = True
+                data_done = True
 
-        # try load from file, else evaluate result
-        pickle_name = os.path.join(Cube.checkpoints_dir, '{}.pkl'.format(self.name()))
-        logger.info('Pickle name: {}'.format(pickle_name))
-        if not os.path.isfile(pickle_name):
-            logger.info('Cache is not ok. Evaluating...')
+        # try load from file
+        pickle_name = os.path.join(Cube.checkpoints_dir, '{}.pkl'.format(key))
+        if not disable_file_cache and not data_done:
+            logger.info('Pickle name: {}'.format(pickle_name))
+            if os.path.isfile(pickle_name):
+                logger.debug('Loading from file cache')
+                with open(pickle_name, 'rb') as f:
+                    data = pickle.load(f)
+                data_file_cache = True
+                data_done = True
+
+        if not data_done:
+            logger.info('Caches do not contain the data. Evaluating...')
             data = self.eval()
+            logger.info('Evaluated...')
+            data_done = True
 
-            if do_not_save_to_file:
-                logger.info('Result is not saved because of flag do_not_save_to_file')
-                return data
-
-            logger.info('Writing cache')
+        # save to file cache
+        if not disable_file_cache and not data_file_cache:
+            logger.debug('Save to file cache')
             if not os.path.isdir(Cube.checkpoints_dir):
                 os.makedirs(Cube.checkpoints_dir)
             with open(pickle_name, 'wb') as f:
                 pickle.dump(data, f)
-        else:
-            logger.info('Cache is ok')
-        logger.info('Loading from cache')
-        with open(pickle_name, 'rb') as f:
-            data = pickle.load(f)
 
-        # ERROR: inmemory cache is not used if pickle chache disabled
+        # save to inmemory cache
+        if not disable_inmemory_cache and not data_inmemory_cache:
+            logger.debug('Save to inmemory cache')
+            cache.Cache().add(key, data)
 
-        if not disable_inmemory_cache:
-            cache.Cache().add(self.name(), data)
-
-        logger.info('Loaded')
         return data
 
     @abc.abstractmethod

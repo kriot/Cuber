@@ -141,7 +141,7 @@ class Main():
         for row in res:
             print '\n'.join(map(str, row))
 
-    def run_graph(self, workflow_file, full_result, comment, disable_inmemory_cache):
+    def run_graph(self, workflow_file, full_result, comment, disable_inmemory_cache, disable_file_cache):
         self.workflow_file = workflow_file
         self.comment = comment
         start_time = time.time()
@@ -161,7 +161,7 @@ class Main():
             wf = workflow.Workflow(workflow_file)
 
             self.db_update_status('running')
-            data = wf.run(disable_inmemory_cache = disable_inmemory_cache)
+            data = wf.run(disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
 
             res = '{}:\n'.format(workflow_file)
             for key, value in data.iteritems():
@@ -219,13 +219,18 @@ def test_telegram():
 @cli.command()
 @click.argument('workflow_file')
 @click.option('--full_result', default = False, is_flag=True)
-@click.option('--no_inmemory_cache', default = False, is_flag=True)
+@click.option('--disable_inmemory_cache', default = False, is_flag=True)
+@click.option('--disable_file_cache', default = False, is_flag=True)
 @click.option('--comment', default = '')
-def run(workflow_file, full_result, comment, no_inmemory_cache):
+def run(workflow_file, full_result, comment, disable_inmemory_cache, disable_file_cache):
     """
         Runs the workflow file (graph)
     """
-    Main().run_graph(workflow_file, full_result, comment, disable_inmemory_cache = no_inmemory_cache)
+    Main().run_graph(workflow_file, full_result, 
+        comment = comment, 
+        disable_inmemory_cache = disable_inmemory_cache,
+        disable_file_cache = disable_file_cache,    
+    )
 
 @cli.command()
 @click.argument('pickle_file')
