@@ -5,7 +5,7 @@
 # Usage
 * Create your cubes and other files (per project)
 * Configure workflow via graph (create separate .wf file per configuration)
-* Run configuration: `python -m cuber your_graph.wf` from dirctory of project (it is important, becuase it imports your modules)
+* Run configuration: `python -m cuber run your_graph.wf` from dirctory of project (it is important, becuase it imports your modules)
 
 Also, you may use cubes separately. You need just call `MyCube(params_of_the_cube).get()`. It will load the cached result, if it exist, or make a calculations. The result is equal to result of fucntion `eval`.
 
@@ -62,6 +62,11 @@ class Cube(object):
 This module parses graphs from `.wf` file and runs cubes. See `__main__.py` file for example.
 
 # Examples
+Note: you are able to turn on logging of all packages (not only your cubes) with option `--logging` and set logging level to debug via `--debug`.
+```
+python -m cuber --logging --debug run with_train_test_split.wf
+```
+
 ## Example 1
 See code, it is simple.
 Note, it does not evaluate function for the second time:

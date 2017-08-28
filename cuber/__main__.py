@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s: %(asctime)s ::: %(name)s: %(message)s (%(filename)s:%(lineno)d)',
                                                 datefmt='%Y-%m-%d %H:%M:%S')
 
-def setup_logging(tg_chat, tg_token):
+def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logging = False):
     if tg_chat is not None:
         tg_chat = int(tg_chat)
 
@@ -28,6 +28,8 @@ def setup_logging(tg_chat, tg_token):
             'formatter': 'console'
         },
     }
+
+    logging_level = 'DEBUG' if debug_logging else 'INFO'
 
     if tg_chat is not None:
         logging_handlers['telegram'] = {
@@ -43,7 +45,7 @@ def setup_logging(tg_chat, tg_token):
         'handlers': logging_handlers,
         "loggers": {
             "": {
-                "level": "DEBUG",
+                "level": logging_level,
                 "handlers": ['console'] + (['telegram'] if tg_chat is not None else []),
                 "propagate": "no"
             }
@@ -56,7 +58,7 @@ def setup_logging(tg_chat, tg_token):
                 'format': '%(message)s',
             }
         },
-#        'disable_existing_loggers': False,
+        'disable_existing_loggers': disable_existing_loggers,
     })
 
 class Main():
@@ -192,7 +194,9 @@ class Main():
 config = None
 
 @click.group()
-def cli():
+@click.option('--logging', default = False, is_flag=True)
+@click.option('--debug', default = False, is_flag=True)
+def cli(logging, debug):
     global config
     config_file = '.cuber'
     config = configparser.ConfigParser()
@@ -201,6 +205,8 @@ def cli():
     setup_logging(
         config.get('telegram', 'chat_id', fallback = None),
         config.get('telegram', 'token', fallback = None),
+        disable_existing_loggers = not logging,
+        debug_logging = debug,
     )
 
 @cli.command()
