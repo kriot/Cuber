@@ -33,7 +33,7 @@ def universal_hash(obj):
             return sha224(obj.tostring())
         if obj is None:
             return sha224('none' + 'salt123')
-        raise NotImplementedError()
+        raise NotImplementedError('Unspported type for hashing: {}. Object: {}'.format(type(obj), obj))
 
 def json_hash(obj):
     return sha224(json.dumps(obj))
