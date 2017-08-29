@@ -1,6 +1,7 @@
 import importlib
 import copy
 import json
+import commentjson
 import logging
 from functools32 import lru_cache
 
@@ -38,11 +39,11 @@ class Workflow():
             with open(workflow_file) as f:
                 graph_json = f.read()
             logger.debug('Graph json: {}'.format(graph_json))
-            self.graph = json.loads(graph_json)
+            self.graph = commentjson.loads(graph_json)
         elif isinstance(graph, basestring):
             graph_json = graph
             logger.debug('Graph json: {}'.format(graph_json))
-            self.graph = json.loads(graph_json)
+            self.graph = commentjson.loads(graph_json)
         else:
             self.graph = graph
 

@@ -9,6 +9,7 @@ import configparser
 import sqlite3
 import datetime
 import json
+import commentjson
 
 import workflow
 import cube
@@ -255,7 +256,7 @@ def optimize(optimize_file, iters, comment, opt_id):
     else:
         with open(optimize_file) as f:
             optimize_json = f.read()
-        optimize = json.loads(optimize_json)
+        optimize = commentjson.loads(optimize_json)
 
         with open(optimize['graph_file']) as f:
             graph = f.read()
