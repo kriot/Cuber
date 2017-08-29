@@ -1,11 +1,12 @@
 {
     "dataset":{
         "comment": "Example comment",
+# i do not want this string
         "module": "cube_split_train_test",
         "class": "CubeSplitTrainTest",
         "attrs": {
             "test_ratio": 0.3,
-            "seed": 0
+            "seed": 0 // random seed
         },
         "deps": [
             {

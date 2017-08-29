@@ -8,5 +8,5 @@ setup(name='cuber',
       author_email='borisenko.gn@yandex.ru',
       license='GNU GPLv3',
       packages=['cuber'],
-      install_requires=['click', 'numpy', 'configparser', 'python_telegram_handler', 'GPy', 'GPyOpt'],
+      install_requires=['click', 'numpy', 'configparser', 'commentjson', 'python_telegram_handler', 'GPy', 'GPyOpt'],
       zip_safe=False)
