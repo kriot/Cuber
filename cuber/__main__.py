@@ -172,24 +172,25 @@ class Main():
                     res += '{}: ...\n'.format(key)
 
             if time.time() - start_time >= message_delay:
-                logging.critical('Calculation is done: {}\n{}'.format(job_descritpion, res))
+                logging.critical('Calculation is done: {} (graph id: {})\n{}'.format(job_descritpion, self.db_id, res))
             else:
-                logging.info('Calculation is done: {}\n{}'.format(job_descritpion, res))
+                logging.info('Calculation is done: {} (graph id: {})\n{}'.format(job_descritpion, self.db_id, res))
             self.db_save_result(res)
             self.db_update_status('done')
         except KeyboardInterrupt:
             if time.time() - start_time >= message_delay:
-                logging.critical('Calculation is cancelled: {}'.format(job_descritpion))
+                logging.critical('Calculation is cancelled: {} (graph id: {})'.format(job_descritpion, self.db_id))
             else:
-                logging.error('Calculation is cancelled: {}'.format(job_descritpion))
+                logging.error('Calculation is cancelled: {} (graph id: {})'.format(job_descritpion, self.db_id))
+            self.db_save_result('candelled')
             self.db_update_status('cancelled')
         except:
             import traceback
             traceback.print_exc()
             if time.time() - start_time >= message_delay:
-                logging.critical('Calculation is failed: {}'.format(job_descritpion))
+                logging.critical('Calculation is failed: {} (graph id: {})'.format(job_descritpion, self.db_id))
             else:
-                logging.error('Calculation is failed: {}'.format(job_descritpion))
+                logging.error('Calculation is failed: {} (graph id: {})'.format(job_descritpion, self.db_id))
             self.db_update_status('failed')
 
 config = None
