@@ -39,4 +39,5 @@ def universal_hash(obj):
         raise NotImplementedError('Unspported type for hashing: {}. Object: {}'.format(type(obj), obj))
 
 def json_hash(obj):
+    raise NotImplementedError('Do not use json hashing, beacuse it is not pure. The order of dict`s keys is not totally specified.')
     return sha224(json.dumps(obj))
