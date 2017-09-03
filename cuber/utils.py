@@ -28,7 +28,7 @@ def universal_hash(obj):
                     sorted([universal_hash((universal_hash(key), universal_hash(value))) for key, value in obj.iteritems()])
                 )
         if isinstance(obj, tuple):
-            return json_hash(list(universal_hash(item) for item in obj))
+            return reduce(lambda x,y : universal_hash(x + y), list(universal_hash(item) for item in obj))
         if isinstance(obj, list):
             return universal_hash(tuple(obj))
         if isinstance(obj, np.ndarray):
