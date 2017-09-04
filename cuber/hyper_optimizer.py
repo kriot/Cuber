@@ -151,6 +151,7 @@ class HyperOptimizer():
         self.optimization_field = self.handler.get_params()['target']
 
     def substitute_params(self, point):
+        # TODO: Remove this function. This is basic functionallity of workflow now.
         '''
         :param point: array of vars' values in order of dictionary
         '''
