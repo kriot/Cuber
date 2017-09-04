@@ -1,0 +1,79 @@
+{
+    "dataset":{
+        "comment": "Example comment",
+# i do not want this string
+        "module": "cube_split_train_test",
+        "class": "CubeSplitTrainTest",
+        "attrs": {
+            "test_ratio": 0.3,
+            "seed": 0 // random seed
+        },
+        "deps": [
+            {
+                "comment": "We are going to split generated data",
+                "graph": {
+                    "module": "cube_gen_data",
+                    "class": "CubeGenData",
+                    "attrs": {
+                        "a": 1.4,
+                        "b": 0.3,
+                        "noise": "$noise",
+                        "n": 40,
+                        "seed": 0
+                    }
+                }
+            }
+        ]
+    },
+    "applied_trained_model":
+    {
+        "module": "cube_apply_model",
+        "class": "CubeApplyModel",
+        "deps": [
+            {
+                "fields": {
+                    "X": "X_test"
+                },
+                "graph": "dataset"
+            },
+            {
+                "graph": {
+                    "module": "cube_train_model",
+                    "class": "CubeTrainModel",
+                    "attrs": {
+                        "model_module": "linear_model",
+                        "model_class": "LinearModel"
+                    },
+                    "deps": [
+                        {
+                            "fields": {
+                                "X": "X_train",
+                                "y": "y_train"
+                            },
+                            "graph": "dataset"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "metrics": {
+        "module": "cube_rmse",
+        "class": "CubeRMSE",
+        "deps": [
+            {
+                "fields": {
+                    "prediction": "prediction"
+                },
+                "graph": "applied_trained_model"
+            },
+            {
+                "fields": {
+                    "real": "y_test"
+                },
+                "graph": "dataset"
+            }
+        ]
+    },
+    "main": "metrics"
+}

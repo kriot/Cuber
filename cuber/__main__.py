@@ -19,6 +19,8 @@ logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s: %(asctime)s ::: %(name)s: %(message)s (%(filename)s:%(lineno)d)',
                                                 datefmt='%Y-%m-%d %H:%M:%S')
 
+# TODO: save to db: graph_args, main graph, important flag
+
 def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logging = False):
     if tg_chat is not None:
         tg_chat = int(tg_chat)
@@ -142,7 +144,7 @@ class Main():
         for row in res:
             print '\n'.join(map(str, row))
 
-    def run_graph(self, workflow_file, full_result, comment, disable_inmemory_cache, disable_file_cache):
+    def run_graph(self, workflow_file, full_result, comment, main, graph_args, disable_inmemory_cache, disable_file_cache):
         self.workflow_file = workflow_file
         self.comment = comment
         start_time = time.time()
@@ -159,7 +161,7 @@ class Main():
         try:
             cube.Cube.checkpoints_dir = self.checkpoints_dir
             logging.info('Checkpoints dir: {}'.format(cube.Cube.checkpoints_dir))
-            wf = workflow.Workflow(workflow_file)
+            wf = workflow.Workflow(workflow_file, main = main, graph_args = graph_args)
 
             self.db_update_status('running')
             data = wf.run(disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
@@ -224,7 +226,9 @@ def test_telegram():
 @click.option('--disable_inmemory_cache', default = False, is_flag=True)
 @click.option('--disable_file_cache', default = False, is_flag=True)
 @click.option('--comment', default = '')
-def run(workflow_file, full_result, comment, disable_inmemory_cache, disable_file_cache):
+@click.option('--main', default = 'main', help = 'Name of graph, that will be evaluated.')
+@click.option('--graph_args', default = '{}', help = 'Json dict of params, that will be substituted at graph after `$` (`$alpha` and so on).')
+def run(workflow_file, full_result, comment, main, graph_args, disable_inmemory_cache, disable_file_cache):
     """
         Runs the workflow file (graph)
     """
@@ -232,6 +236,8 @@ def run(workflow_file, full_result, comment, disable_inmemory_cache, disable_fil
         comment = comment, 
         disable_inmemory_cache = disable_inmemory_cache,
         disable_file_cache = disable_file_cache,    
+        graph_args = json.loads(graph_args),
+        main = main,
     )
 
 @cli.command()

@@ -4,11 +4,13 @@ import json
 import commentjson
 import logging
 from functools32 import lru_cache
+import traceback
+import utils
 
 logger = logging.getLogger(__name__)
 
 class Workflow():
-    def __init__(self, workflow_file = None, graph = None):
+    def __init__(self, workflow_file = None, graph = None, main = 'main', graph_args = {}):
         '''
         Example:
         {
@@ -35,6 +37,8 @@ class Workflow():
             ]
         }
         '''
+        self.graph_args = graph_args
+        self.main = main
         if workflow_file is not None:
             with open(workflow_file) as f:
                 graph_json = f.read()
@@ -46,12 +50,26 @@ class Workflow():
             self.graph = commentjson.loads(graph_json)
         else:
             self.graph = graph
+        logger.debug('Graph args: {}'.format(graph_args))
 
     def get_graph(self, name):
         return self.graph[name]
 
+    def __substitute_graph_args(self, attrs):
+        attrs_ = {}
+        for key, value in attrs.iteritems():
+            if isinstance(value, basestring) and value.startswith('$'):
+                graph_args_key = value[1:]
+                logger.debug('Substitute param: {}'.format(graph_args_key))
+                if graph_args_key not in self.graph_args:
+                    raise ValueError('Key {} is not specified in graph args: {}'.format(graph_args_key, self.graph_args))
+                attrs_[key] = self.graph_args[graph_args_key] 
+            else:
+                attrs_[key] = value
+        return attrs_
+
     def run(self, disable_inmemory_cache = False, disable_file_cache = False):
-        return self.__run_graph('main', disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
+        return self.__run_graph(self.main, disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
 
     def __run_graph(self, graph_, disable_inmemory_cache, disable_file_cache):
         '''
@@ -71,6 +89,7 @@ class Workflow():
             assert key in {'attrs', 'deps', 'class', 'module', 'comment'}
 
         attrs = copy.deepcopy(graph_.get('attrs', {}))
+        attrs = self.__substitute_graph_args(attrs)
         for dep in graph_.get('deps', {}):
             for key in dep.keys():
                 assert key in {'fields', 'graph', 'prefix', 'comment'}
