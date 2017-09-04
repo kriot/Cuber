@@ -112,6 +112,17 @@ class Main():
         self.db_connect.commit()
         logging.info('DB: status updated to {}'.format(status))
 
+    def db_update_comment(self, comment):
+        c = self.db_connect.cursor()
+        c.execute(
+        '''
+            UPDATE graphs SET comment = ? WHERE id = ?
+        ''',
+            (comment, self.db_id)
+        )
+        self.db_connect.commit()
+        logging.info('DB: comment updated')
+
     def db_save_result(self, result):
         c = self.db_connect.cursor()
         c.execute(
@@ -343,6 +354,17 @@ def killed(graph_id):
         Setup status 'killed' for graph. If you kill the process, it will not update status automatically, so it would be marked 'running'. 
     """
     Main().set_status_killed(graph_id)
+
+@cli.command()
+@click.argument('graph_id')
+@click.option('--comment', required = True)
+def update_comment(graph_id, comment):
+    """
+        Obviously, updates comment. 
+    """
+    m = Main()
+    m.db_id = graph_id
+    m.db_update_comment(comment)
 
 if __name__ == '__main__':
     cli()
