@@ -110,7 +110,7 @@ class Main():
             (status, self.db_id)
         )
         self.db_connect.commit()
-        logging.info('DB: status updated')
+        logging.info('DB: status updated to {}'.format(status))
 
     def db_save_result(self, result):
         c = self.db_connect.cursor()
@@ -143,6 +143,10 @@ class Main():
         )
         for row in res:
             print '\n'.join(map(str, row))
+
+    def set_status_killed(self, graph_id):
+        self.db_id = graph_id
+        self.db_update_status('killed')
 
     def run_graph(self, workflow_file, full_result, comment, main, graph_args, disable_inmemory_cache, disable_file_cache):
         self.workflow_file = workflow_file
@@ -331,6 +335,14 @@ def detailed(graph_id):
         Shows details of one of history graphs.
     """
     Main().db_show_detailed(graph_id)
+
+@cli.command()
+@click.argument('graph_id')
+def killed(graph_id):
+    """
+        Setup status 'killed' for graph. If you kill the process, it will not update status automatically, so it would be marked 'running'. 
+    """
+    Main().set_status_killed(graph_id)
 
 if __name__ == '__main__':
     cli()
