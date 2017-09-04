@@ -41,3 +41,15 @@ def universal_hash(obj):
 def json_hash(obj):
     raise NotImplementedError('Do not use json hashing, beacuse it is not pure. The order of dict`s keys is not totally specified.')
     return sha224(json.dumps(obj))
+
+def dict_to_string(d, full = False, brackets = False):
+    res = '{\n' if brackets else ''
+    for key, value in d.iteritems():
+        if full or isinstance(value, str) or isinstance(value, numbers.Number):
+            res += '\t' if brackets else ''
+            res += '{}: {}\n'.format(key, value)
+        else:
+            res += '\t' if brackets else ''
+            res += '{}: ...\n'.format(key)
+    res += '}' if brackets else ''
+    return res

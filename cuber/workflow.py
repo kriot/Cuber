@@ -93,9 +93,34 @@ class Workflow():
 
         module = importlib.import_module(graph_['module'])
         logger.debug('Attrs keys: {}'.format(attrs.keys()))
-        cube_init = getattr(module, graph_['class'])(**attrs)
-        res = cube_init.get(
-            disable_inmemory_cache = disable_inmemory_cache, 
-            disable_file_cache = disable_file_cache
-        )
+        try:
+            cube_init = getattr(module, graph_['class'])(**attrs)
+        except Exception as e:
+            logging.error('Faild to init cube:\nCube: {cube}\nGraph part: {graph_part}\nAttrs: {attrs}\nError: {error}\nTraceback: {tb}' \
+                .format(
+                    cube = graph_['module'],
+                    graph_part = str(graph_),
+                    attrs = utils.dict_to_string(attrs, brackets = True),
+                    error = str(e),
+                    tb = traceback.format_exc(),
+                )
+            )
+            raise
+
+        try:
+            res = cube_init.get(
+                disable_inmemory_cache = disable_inmemory_cache, 
+                disable_file_cache = disable_file_cache
+            )
+        except Exception as e:
+            logging.error('Faild to cube.get():\nCube: {cube}\nGraph part: {graph_part}\nAttrs: {attrs}\nError: {error}\nTraceback: {tb}' \
+                .format(
+                    cube = graph_['module'],
+                    graph_part = str(graph_),
+                    attrs = utils.dict_to_string(attrs, brackets = True),
+                    error = str(e),
+                    tb = traceback.format_exc(),
+                )
+            )
+            raise
         return res
