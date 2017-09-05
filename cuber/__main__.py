@@ -134,12 +134,12 @@ class Main():
         self.db_connect.commit()
         logging.info('DB: result saved')
 
-    def db_show(self):
+    def db_show(self, filter_done = False):
         c = self.db_connect.cursor()
         res = c.execute(
         '''
-            SELECT id, file, start_time, status, comment FROM graphs
-        ''',
+            SELECT id, file, start_time, status, comment FROM graphs {}
+        '''.format('WHERE status = "done"' if filter_done else ''),
         )
         for row in res:
             print '\t'.join(map(str, row))
@@ -333,11 +333,12 @@ def optimize_show(opt_id):
             print '\t'.join(map(str, row))
 
 @cli.command()
-def show():
+@click.option('--done', default = False, is_flag=True)
+def show(done):
     """
         Shows the graphs run history.
     """
-    Main().db_show()
+    Main().db_show(filter_done = done)
 
 @cli.command()
 @click.argument('graph_id')
