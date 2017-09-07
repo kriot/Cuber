@@ -53,3 +53,10 @@ def dict_to_string(d, full = False, brackets = False):
             res += '{}: ...\n'.format(key)
     res += '}' if brackets else ''
     return res
+
+def parse_bool(s):
+    if isinstance(s, bool):
+        return s
+    assert s in {'yes', 'y', '1', 1, '+', 'on', 'enable', 'true',
+                 'no',  'n', '0', 0, '-', 'off','disable', 'false'}
+    return s in {'yes', 'y', '1', '+', 'on', 'enable'}

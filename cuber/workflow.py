@@ -86,7 +86,7 @@ class Workflow():
             assert key in graph_
 
         for key in graph_.keys():
-            assert key in {'attrs', 'deps', 'class', 'module', 'comment'}
+            assert key in {'attrs', 'deps', 'class', 'module', 'comment', 'disable_inmemory_cache', 'disable_file_cache'}
 
         attrs = copy.deepcopy(graph_.get('attrs', {}))
         attrs = self.__substitute_graph_args(attrs)
@@ -128,8 +128,8 @@ class Workflow():
 
         try:
             res = cube_init.get(
-                disable_inmemory_cache = disable_inmemory_cache, 
-                disable_file_cache = disable_file_cache
+                disable_inmemory_cache = disable_inmemory_cache or utils.parse_bool(graph_.get('disable_inmemory_cache', 'false')), 
+                disable_file_cache = disable_file_cache or utils.parse_bool(graph_.get('disable_file_cache', 'false')),
             )
         except Exception as e:
             logging.error('Faild to cube.get():\nCube: {cube}\nGraph part: {graph_part}\nAttrs: {attrs}\nError: {error}\nTraceback: {tb}' \
