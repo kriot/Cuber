@@ -25,10 +25,11 @@ def universal_hash(obj):
             return sha224(repr(obj))
         if isinstance(obj, dict):
             return reduce(lambda x,y : universal_hash(x + y),
-                    sorted([universal_hash((universal_hash(key), universal_hash(value))) for key, value in obj.iteritems()])
+                    sorted([universal_hash((universal_hash(key), universal_hash(value))) for key, value in obj.iteritems()]), 
+                    universal_hash('empty_dict_hash')
                 )
         if isinstance(obj, tuple):
-            return reduce(lambda x,y : universal_hash(x + y), list(universal_hash(item) for item in obj))
+            return reduce(lambda x,y : universal_hash(x + y), list(universal_hash(item) for item in obj), universal_hash('empty_array_hash'))
         if isinstance(obj, list):
             return universal_hash(tuple(obj))
         if isinstance(obj, np.ndarray):
