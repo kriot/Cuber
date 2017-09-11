@@ -68,6 +68,7 @@ class Main():
     def __init__(self):
 
         self.checkpoints_dir = config.get('cuber', 'checkpoints_dir', fallback = './checkpoints/')
+        self.frozens_dir = config.get('cuber', 'frozens_dir', fallback = './frozens/')
 
         self.setup_db()
 
@@ -159,7 +160,10 @@ class Main():
         self.db_id = graph_id
         self.db_update_status('killed')
 
-    def run_graph(self, workflow_file, full_result, comment, main, graph_args, disable_inmemory_cache, disable_file_cache):
+    def run_graph(self, workflow_file, full_result, comment, main, graph_args, 
+            disable_inmemory_cache, disable_file_cache,
+            frozens_id, create_frozens, use_frozens,
+            ):
         self.workflow_file = workflow_file
         self.comment = comment
         start_time = time.time()
@@ -176,7 +180,14 @@ class Main():
         try:
             cube.Cube.checkpoints_dir = self.checkpoints_dir
             logging.info('Checkpoints dir: {}'.format(cube.Cube.checkpoints_dir))
-            wf = workflow.Workflow(workflow_file, main = main, graph_args = graph_args)
+            wf = workflow.Workflow(workflow_file, 
+                main = main, 
+                graph_args = graph_args,
+                frozens_dir = self.frozens_dir, 
+                frozens_id = frozens_id,
+                create_frozens = create_frozens,
+                use_frozens = use_frozens,
+            )
 
             self.db_update_status('running')
             data = wf.run(disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
@@ -243,16 +254,25 @@ def test_telegram():
 @click.option('--comment', default = '')
 @click.option('--main', default = 'main', help = 'Name of graph, that will be evaluated.')
 @click.option('--graph_args', default = '{}', help = 'Json dict of params, that will be substituted at graph after `$` (`$alpha` and so on).')
-def run(workflow_file, full_result, comment, main, graph_args, disable_inmemory_cache, disable_file_cache):
+@click.option('--create_frozens', default = None, help = 'Create frozen points at subgraphs, where you specified "frozen": true')
+@click.option('--use_frozens', default = None)
+def run(workflow_file, full_result, comment, main, graph_args, 
+        disable_inmemory_cache, disable_file_cache,
+        create_frozens, use_frozens,
+        ):
     """
         Runs the workflow file (graph)
     """
+    frozens_id = create_frozens if create_frozens is not None else use_frozens if use_frozens is not None else None
     Main().run_graph(workflow_file, full_result, 
         comment = comment, 
         disable_inmemory_cache = disable_inmemory_cache,
         disable_file_cache = disable_file_cache,    
         graph_args = json.loads(graph_args),
         main = main,
+        frozens_id = frozens_id,
+        create_frozens = create_frozens is not None,
+        use_frozens = use_frozens is not None,
     )
 
 @cli.command()

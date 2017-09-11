@@ -40,7 +40,7 @@ def universal_hash(obj):
         raise NotImplementedError('Unspported type for hashing: {}. Object: {}'.format(type(obj), obj))
 
 def json_hash(obj):
-    raise NotImplementedError('Do not use json hashing, beacuse it is not pure. The order of dict`s keys is not totally specified.')
+    raise NotImplementedError('Do not use json hashing, beacuse it is not pure. The order of dict`s keys is not totally specified. You may simple replace json_hash to univrsal_hash')
     return sha224(json.dumps(obj))
 
 def dict_to_string(d, full = False, brackets = False):
@@ -60,4 +60,4 @@ def parse_bool(s):
         return s
     assert s in {'yes', 'y', '1', 1, '+', 'on', 'enable', 'true',
                  'no',  'n', '0', 0, '-', 'off','disable', 'false'}
-    return s in {'yes', 'y', '1', '+', 'on', 'enable'}
+    return s in {'yes', 'y', '1', 1, '+', 'on', 'enable', 'true'}
