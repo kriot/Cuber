@@ -19,7 +19,7 @@ class Cube(object):
         '''
         return
 
-    def get(self, disable_file_cache = False, disable_inmemory_cache = False):
+    def get(self, disable_file_cache = False, disable_inmemory_cache = False, cleanup = False):
         '''
             Checks if there is a cached verison and loads it.
             If there is no cached version, runs calcualtions via eval function.
@@ -68,6 +68,10 @@ class Cube(object):
                 os.makedirs(Cube.checkpoints_dir)
             with open(pickle_name, 'wb') as f:
                 pickle.dump(data, f)
+
+        if cleanup:
+            if os.path.isfile(pickle_name):
+                os.remove(pickle_name)
 
         # save to inmemory cache
         if not disable_inmemory_cache and not data_inmemory_cache:

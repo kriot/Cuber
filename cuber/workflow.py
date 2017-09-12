@@ -97,14 +97,15 @@ class Workflow():
                 attrs_[key] = value
         return attrs_
 
-    def run(self, disable_inmemory_cache = False, disable_file_cache = False):
+    def run(self, disable_inmemory_cache = False, disable_file_cache = False, cleanup = False):
         return self.__run_graph(
             graph_ = self.main, 
             disable_inmemory_cache = disable_inmemory_cache, 
             disable_file_cache = disable_file_cache,
+            cleanup = cleanup,
         )
 
-    def __run_graph(self, graph_, disable_inmemory_cache, disable_file_cache):
+    def __run_graph(self, graph_, disable_inmemory_cache, disable_file_cache, cleanup):
         '''
             TODO: improve excprions for incorrect graph
         '''
@@ -139,7 +140,11 @@ class Workflow():
             for key in dep.keys():
                 assert key in {'fields', 'graph', 'prefix', 'comment'}
 
-            res = self.__run_graph(dep['graph'], disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
+            res = self.__run_graph(dep['graph'], 
+                    disable_inmemory_cache = disable_inmemory_cache, 
+                    disable_file_cache = disable_file_cache,
+                    cleanup = cleanup,
+                )
             assert isinstance(res, dict), 'You may not use non-dict-result cube as a dependency'
             if 'fields' not in dep:
                 for key in res:
@@ -176,6 +181,7 @@ class Workflow():
             res = cube_init.get(
                 disable_inmemory_cache = disable_inmemory_cache or utils.parse_bool(graph_.get('disable_inmemory_cache', 'false')), 
                 disable_file_cache = disable_file_cache or utils.parse_bool(graph_.get('disable_file_cache', 'false')),
+                cleanup = cleanup,
             )
         except Exception as e:
             logging.error('Faild to cube.get():\nCube: {cube}\nGraph part: {graph_part}\nAttrs: {attrs}\nError: {error}\nTraceback: {tb}' \

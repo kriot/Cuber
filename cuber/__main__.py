@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s: %(asctime)s ::: %(name)s: %(message)s (%(filename)s:%(lineno)d)',
                                                 datefmt='%Y-%m-%d %H:%M:%S')
 
-# TODO: save to db: graph_args, main graph, important flag
+# TODO: save to db: graph_args, main graph, important flag, run string
 
 def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logging = False):
     if tg_chat is not None:
@@ -163,6 +163,7 @@ class Main():
     def run_graph(self, workflow_file, full_result, comment, main, graph_args, 
             disable_inmemory_cache, disable_file_cache,
             frozens_id, create_frozens, use_frozens,
+            cleanup,
             ):
         self.workflow_file = workflow_file
         self.comment = comment
@@ -190,7 +191,11 @@ class Main():
             )
 
             self.db_update_status('running')
-            data = wf.run(disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
+            data = wf.run(
+                disable_inmemory_cache = disable_inmemory_cache, 
+                disable_file_cache = disable_file_cache,
+                cleanup = cleanup,
+            )
 
             res = '{}:\n'.format(workflow_file)
             for key, value in data.iteritems():
@@ -256,9 +261,11 @@ def test_telegram():
 @click.option('--graph_args', default = '{}', help = 'Json dict of params, that will be substituted at graph after `$` (`$alpha` and so on).')
 @click.option('--create_frozens', default = None, help = 'Create frozen points at subgraphs, where you specified "frozen": true')
 @click.option('--use_frozens', default = None)
+@click.option('--cleanup', default = False, is_flag=True)
 def run(workflow_file, full_result, comment, main, graph_args, 
         disable_inmemory_cache, disable_file_cache,
         create_frozens, use_frozens,
+        cleanup,
         ):
     """
         Runs the workflow file (graph)
@@ -273,6 +280,7 @@ def run(workflow_file, full_result, comment, main, graph_args,
         frozens_id = frozens_id,
         create_frozens = create_frozens is not None,
         use_frozens = use_frozens is not None,
+        cleanup = cleanup,
     )
 
 @cli.command()
