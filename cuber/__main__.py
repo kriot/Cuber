@@ -291,6 +291,14 @@ def print_pickle(pickle_file):
     print data
 
 @cli.command()
+@click.argument('pickle_file')
+@click.option('--content', default = '{}', required = True)
+def write_pickle(pickle_file, content):
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(json.loads(content), f)
+    logging.info('Done')
+
+@cli.command()
 @click.option('--opt_id', default = None)
 @click.option('--iters', default = 20)
 @click.option('--comment', default = '')
