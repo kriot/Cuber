@@ -56,8 +56,19 @@ def dict_to_string(d, full = False, brackets = False):
     return res
 
 def parse_bool(s):
+    '''
+    Converts s to bool. If fails, raises an error.
+    '''
     if isinstance(s, bool):
         return s
     assert s in {'yes', 'y', '1', 1, '+', 'on', 'enable', 'true',
                  'no',  'n', '0', 0, '-', 'off','disable', 'false'}
     return s in {'yes', 'y', '1', 1, '+', 'on', 'enable', 'true'}
+
+def parse_none(s):
+    '''
+    returns true if s is None, else false
+    '''
+    if s is None:
+        return True
+    return s in {'None', 'none', 'null', 'Null', 'NULL', 'nil'}

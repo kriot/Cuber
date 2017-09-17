@@ -85,6 +85,13 @@ class Workflow():
             return utils.universal_hash(graph__)
 
     def __substitute_graph_args(self, attrs):
+        '''
+        Attr format:
+         * value (3.14, "foo", true or ['1', 'b'], etc)
+         * variable ("$foo"). In this case value from graph_args will be substituted.
+         * special dict. Dict must contain key 'cuber' with value true. 
+           The dict may specify variable (key "var") and defult value (key "default"), if variable is not set in graph_args.
+        '''
         attrs_ = {}
         for key, value in attrs.iteritems():
             if isinstance(value, basestring) and value.startswith('$'):
@@ -93,6 +100,19 @@ class Workflow():
                 if graph_args_key not in self.graph_args:
                     raise ValueError('Key {} is not specified in graph args: {}'.format(graph_args_key, self.graph_args))
                 attrs_[key] = self.graph_args[graph_args_key] 
+            elif isinstance(value, dict) and utils.parse_bool(value.get('cuber', 'false')):
+                assert value['var'].startswith('$')
+                graph_args_key = value['var'][1:]
+                logger.debug('Substitute param: {}'.format(graph_args_key))
+                if graph_args_key not in self.graph_args:
+                    if 'default' in value:
+                        attrs_[key] = value['default']
+                    else:
+                        raise ValueError('''Key {} is not specified in graph args and default value is not set (key "default"): 
+                            attr: {}, 
+                            graph_args: {}'''.format(graph_args_key, value, self.graph_args))
+                else:
+                    attrs_[key] = self.graph_args[graph_args_key] 
             else:
                 attrs_[key] = value
         return attrs_
