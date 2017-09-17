@@ -19,7 +19,11 @@
                         "a": 1.4,
                         "b": 0.3,
                         "noise": "$noise",
-                        "n": 40,
+                        "n": {
+                            "cuber": true,
+                            "default": 40,
+                            "var": "$n"
+                        },
                         "seed": 0
                     }
                 }
