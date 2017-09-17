@@ -46,7 +46,7 @@ def json_hash(obj):
 def dict_to_string(d, full = False, brackets = False):
     res = '{\n' if brackets else ''
     for key, value in d.iteritems():
-        if full or isinstance(value, str) or isinstance(value, numbers.Number):
+        if full or isinstance(value, basestring) or isinstance(value, numbers.Number):
             res += '\t' if brackets else ''
             res += '{}: {}\n'.format(key, value)
         else:

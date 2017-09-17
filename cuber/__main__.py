@@ -14,6 +14,7 @@ import commentjson
 import workflow
 import cube
 import hyper_optimizer
+import utils
 
 logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s: %(asctime)s ::: %(name)s: %(message)s (%(filename)s:%(lineno)d)',
@@ -197,12 +198,7 @@ class Main():
                 cleanup = cleanup,
             )
 
-            res = '{}:\n'.format(workflow_file)
-            for key, value in data.iteritems():
-                if full_result or isinstance(value, str) or isinstance(value, numbers.Number):
-                    res += '{}: {}\n'.format(key, value)
-                else:
-                    res += '{}: ...\n'.format(key)
+            res = utils.dict_to_string(data, full = full_result)
 
             if time.time() - start_time >= message_delay:
                 logging.critical('Calculation is done: {} (graph id: {})\n{}'.format(job_descritpion, self.db_id, res))

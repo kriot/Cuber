@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='cuber',
-      version='1.0.4',
+      version='1.0.5',
       description='Calculation-graph base',
       url='https://github.com/kriot/Cuber',
       author='Georgy Borisenko',
