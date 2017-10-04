@@ -23,57 +23,78 @@
             }
         ]
     },
-    "applied_trained_model":
-    {
-        "module": "cube_apply_model",
-        "class": "CubeApplyModel",
+    "trained_models": {
+        "module": "cube_train_model",
+        "class": "CubeTrainModel",
+        "name": "trained_model",
+        "attrs": {
+            "model_module": "linear_model",
+            "model_class": "LinearModel"
+        },
         "deps": [
             {
                 "fields": {
-                    "X": "X_test"
+                    "X": "X_train",
+                    "y": "y_train"
                 },
                 "graph": "dataset"
-            },
-            {
-                "graph": {
-                    "module": "cube_train_model",
-                    "class": "CubeTrainModel",
-                    "frozen": true,
-                    "name": "trained_model",
+            }
+        ]
+    },
+    "metrics_for_all_models": {
+        "module": "cuber.cube_map",
+        "class": "CubeMap",
+        "attrs": {
+            "array_field": "models",
+            "pass_original_items": true,
+            "workflow": {
+                "main": {
+                    "module": "cube_rmse",
+                    "class": "CubeRMSE",
                     "attrs": {
-                        "model_module": "linear_model",
-                        "model_class": "LinearModel"
+                        "real": "$y_test"
                     },
                     "deps": [
                         {
                             "fields": {
-                                "X": "X_train",
-                                "y": "y_train"
+                                "prediction": "prediction"
                             },
-                            "graph": "dataset"
+                            "graph": {
+                                "module": "cube_apply_model",
+                                "class": "CubeApplyModel",
+                                "attrs": {
+                                    "model_module": "$model_module",
+                                    "model_class": "$model_class",
+                                    "model_params": "$model_params",
+                                    "X": "$X_test"
+                                }
+                            }
                         }
                     ]
                 }
             }
-        ]
-    },
-    "metrics": {
-        "module": "cube_rmse",
-        "class": "CubeRMSE",
+        },
         "deps": [
             {
                 "fields": {
-                    "prediction": "prediction"
+                    "X_test": {
+                        "source_field": "X_test",
+                        "pack_to_dict": "apply_params"
+                    },
+                    "y_test": {
+                        "source_field": "y_test",
+                        "pack_to_dict": "apply_params"
+                    }
                 },
-                "graph": "applied_trained_model"
+                "graph": "dataset"
             },
             {
                 "fields": {
-                    "real": "y_test"
+                    "models": "models"
                 },
-                "graph": "dataset"
+                "graph": "trained_models"
             }
         ]
     },
-    "main": "metrics"
+    "main": "metrics_for_all_models"
 }

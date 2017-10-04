@@ -10,6 +10,9 @@ import os.path
 
 logger = logging.getLogger(__name__)
 
+class GraphError(Exception):
+    pass
+
 class Workflow():
     def __init__(self, workflow_file = None, graph = None, main = 'main', graph_args = {}, 
             create_frozens = False, use_frozens = False,
@@ -140,8 +143,10 @@ class Workflow():
             assert key in {'attrs', 'deps', 'class', 'module', 'comment', 'name', 'frozen',
                 'disable_inmemory_cache', 'disable_file_cache'}
 
-        if 'name' in graph_:
-            assert isinstance(graph_['name'], basestring)
+        if 'name' not in graph_:
+            graph_['name'] = str(graph_)
+
+        assert isinstance(graph_['name'], basestring)
 
         def get_frozen_path():
             frozen_path = os.path.join(self.frozens_dir, self.frozens_id, '{}.pkl'.format(self.__get_graph_id(graph_)))
@@ -156,16 +161,27 @@ class Workflow():
 
         attrs = copy.deepcopy(graph_.get('attrs', {}))
         attrs = self.__substitute_graph_args(attrs)
-        for dep in graph_.get('deps', {}):
+        for i, dep in enumerate(graph_.get('deps', {})):
             for key in dep.keys():
-                assert key in {'fields', 'graph', 'prefix', 'comment'}
+                assert key in {'fields', 'graph', 'prefix', 'comment', 'name'}
+
+            if 'name' not in dep:
+                dep['name'] = '{}-th dep'.format(i)
 
             res = self.__run_graph(dep['graph'], 
                     disable_inmemory_cache = disable_inmemory_cache, 
                     disable_file_cache = disable_file_cache,
                     cleanup = cleanup,
                 )
-            assert isinstance(res, dict), 'You may not use non-dict-result cube as a dependency'
+
+            if not isinstance(res, dict):
+                raise GraphError((
+                    'You may not use non-dict-result cube as a dependency.\n'
+                    'Result data: {}\n'
+                    'Graph name: {}\n'
+                    'Dep name: {}'
+                    ).format(res, graph_['name'], dep['name']))
+
             if 'fields' not in dep:
                 for key in res:
                     attr_key = dep.get('prefix', '') + key
@@ -174,12 +190,29 @@ class Workflow():
                         raise ValueError('Graph configuration error')
                     attrs[attr_key] = res[key]
             else:
-                for new_key, old_key in dep['fields'].iteritems():
+                for new_key, old_key_ in dep['fields'].iteritems():
                     attr_key = dep.get('prefix', '') + new_key
-                    if attr_key in attrs:
-                        logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
-                        raise ValueError('Graph configuration error')
-                    attrs[attr_key] = res[old_key]
+                    
+                    pack_to_dict = None
+                    if isinstance(old_key_, basestring):
+                        old_key = old_key_ if old_key_ != '$' else new_key
+                    elif isinstance(old_key_, dict):
+                        old_key = old_key_['source_field'] if old_key_['source_field']!= '$' else new_key
+                        pack_to_dict = old_key_.get('pack_to_dict', None)
+                    
+                    if pack_to_dict is None:
+                        if attr_key in attrs:
+                            logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
+                            raise ValueError('Graph configuration error')
+                        attrs[attr_key] = res[old_key]
+                    else:
+                        if pack_to_dict not in attrs:
+                            attrs[pack_to_dict] = {}
+                        if attr_key in attrs[pack_to_dict]:
+                            logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
+                            raise ValueError('Graph configuration error')
+                        attrs[pack_to_dict][attr_key] = res[old_key]
+                        
 
         module = importlib.import_module(graph_['module'])
         logger.debug('Attrs keys: {}'.format(attrs.keys()))

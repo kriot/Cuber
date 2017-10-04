@@ -8,13 +8,26 @@ class LinearModel(object):
     def fit(self, X, y):
         reg = linear_model.LinearRegression()
         reg.fit(X.reshape(-1, 1), y)
-        self.a = reg.coef_[0]
-        self.b = reg.intercept_
+        models_list = []
+        models_list.append(LinearModel(
+            a = reg.coef_[0],
+            b = reg.intercept_
+        ))
+        for alpha in [0.1, 0.2, 0.5, 1.0, 10., 100.]:
+            reg = linear_model.Lasso(alpha = alpha)
+            reg.fit(X.reshape(-1, 1), y)
+            models_list.append(LinearModel(
+                a = reg.coef_[0],
+                b = reg.intercept_
+            ))
+        return models_list
 
     def serialise(self):
         return {
-            'a': self.a,
-            'b': self.b,
+            'model_params': {
+                'a': self.a,
+                'b': self.b,
+            },
             'model_module': 'linear_model',
             'model_class': 'LinearModel',
         }

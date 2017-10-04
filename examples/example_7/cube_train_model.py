@@ -19,6 +19,7 @@ class CubeTrainModel(cube.Cube):
         logger.info('Evaluating')
         module = importlib.import_module(self.model_module)
         model = getattr(module, self.model_class)()
-        model.fit(**self.kwargs)
-        return model.serialise()
+        return {
+            'models': [model_.serialise() for model_ in model.fit(**self.kwargs)] # sequence of learned models
+        }
 
