@@ -19,6 +19,7 @@ class Workflow():
             frozens_dir = './frozens/',
             frozens_id = None):
         '''
+        Graph args is dict: var_name -> value
         Example:
         {
             'module': 'dcg_metric',
@@ -44,7 +45,6 @@ class Workflow():
             ]
         }
         '''
-        self.graph_args = graph_args
         self.main = main
 
         assert not (create_frozens and use_frozens)
@@ -68,6 +68,9 @@ class Workflow():
             self.graph = commentjson.loads(graph_json)
         else:
             self.graph = graph
+
+        self.graph_args = self.graph.get('def_vars', {})
+        self.graph_args.update(graph_args)
         logger.debug('Graph args: {}'.format(graph_args))
 
     def get_graph(self, name):
@@ -128,6 +131,11 @@ class Workflow():
             cleanup = cleanup,
         )
 
+    def eval_expression(self, expr):
+        assert isinstance(expr, basestring)
+        return eval(expr, self.graph_args)
+
+
     def __run_graph(self, graph_, disable_inmemory_cache, disable_file_cache, cleanup):
         '''
             TODO: improve excprions for incorrect graph
@@ -163,10 +171,16 @@ class Workflow():
         attrs = self.__substitute_graph_args(attrs)
         for i, dep in enumerate(graph_.get('deps', {})):
             for key in dep.keys():
-                assert key in {'fields', 'graph', 'prefix', 'comment', 'name'}
+                assert key in {'fields', 'graph', 'prefix', 'comment', 'name', 'enable_if'}
+
 
             if 'name' not in dep:
                 dep['name'] = '{}-th dep'.format(i)
+
+            if 'enable_if' in dep:
+                if not self.eval_expression(dep['enable_if']):
+                    logger.info('Skip dependecy "{}" because if clause is false'.format(dep['name']))
+                    continue
 
             res = self.__run_graph(dep['graph'], 
                     disable_inmemory_cache = disable_inmemory_cache, 
