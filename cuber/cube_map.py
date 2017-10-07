@@ -4,6 +4,12 @@ from cuber import workflow
 import copy
 
 class CubeMap(cube.Cube):
+    '''
+    This does not allow to restore full result of map operation, because map-graph is not fully defined by its structure it also dependse on versions of code of used cubes.
+    Disableing restoring, we force to apply (not eval!) graph for every item.
+    '''
+    restorable = False 
+
     def __init__(self, workflow, array_field, 
             apply_params = {}, 
             disable_inmemory_cache = False, 
