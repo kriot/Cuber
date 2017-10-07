@@ -21,18 +21,26 @@ class Cache(Singleton, object):
             self.cache = {}
             logger.info('Cache resetted: {}'.format(id(self.cache)))
 
-    def get(self, key):
+    def get(self, key, do_not_copy = False):
         '''
             Returns pair (status, value).
             Status: bool. Is true, if key is stored
         '''
         if key in self.cache:
-            return (True, copy.deepcopy(self.cache.get(key).get('value')))
+            if do_not_copy:
+                return (True, self.cache.get(key).get('value'))
+            else:
+                return (True, copy.deepcopy(self.cache.get(key).get('value')))
         else:
             return (False, None)
 
-    def add(self, key, value):
-        self.cache[key] = {
-            'value': copy.deepcopy(value)
-        }
+    def add(self, key, value, do_not_copy = False):
+        if do_not_copy:
+            self.cache[key] = {
+                'value': value
+            }
+        else:
+            self.cache[key] = {
+                'value': copy.deepcopy(value)
+            }
 

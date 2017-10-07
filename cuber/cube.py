@@ -19,6 +19,12 @@ class Cube(object):
     '''
     restorable = True
 
+    '''
+    Set it to true, if you garuantee that cube.eval (and constructor) does not change the argumetns (that are passed by reference) 
+    It speed up in-memory cache getting (due to not to coping).
+    '''
+    immutable_args = False
+
     @abc.abstractmethod
     def name(self):
         '''
@@ -44,7 +50,7 @@ class Cube(object):
 
         # try load form memory
         if not disable_inmemory_cache and not data_done and self.restorable:
-            cached, cached_data = cache.Cache().get(key)
+            cached, cached_data = cache.Cache().get(key, do_not_copy = self.immutable_args)
             if cached: # true, if object is found 
                 logger.debug('Loaded from in-memory cache')
                 data = cached_data
@@ -83,7 +89,7 @@ class Cube(object):
         # save to inmemory cache
         if not disable_inmemory_cache and not data_inmemory_cache and self.restorable:
             logger.debug('Save to inmemory cache')
-            cache.Cache().add(key, data)
+            cache.Cache().add(key, data, do_not_copy = self.immutable_args) # Are we able to set do_not_copy here true in any case?
 
         return data
 
