@@ -32,13 +32,17 @@ class Cube(object):
         '''
         return
 
-    def get(self, disable_file_cache = False, disable_inmemory_cache = False, cleanup = False):
+    def get(self, disable_file_cache = False, disable_inmemory_cache = False, cleanup = False, perfomance_logging = False):
         '''
             Checks if there is a cached verison and loads it.
             If there is no cached version, runs calcualtions via eval function.
             If you want to get cube's result, use only this function.
         '''
+        if perfomance_logging:
+            logger.info('Getting data for {}'.format(self.__class__.__name__))
         key = self.name() # hashing make take some time
+        if perfomance_logging:
+            logger.info('Key (hash) is done: {}'.format(key))
         logger.debug('Key: {}'.format(key))
 
         data = None
@@ -51,6 +55,8 @@ class Cube(object):
         # try load form memory
         if not disable_inmemory_cache and not data_done and self.restorable:
             cached, cached_data = cache.Cache().get(key, do_not_copy = self.immutable_args)
+            if perfomance_logging:
+                logger.info('In-memory cache has answered: {}'.format('contains' if cached else 'does not contain'))
             if cached: # true, if object is found 
                 logger.debug('Loaded from in-memory cache')
                 data = cached_data
@@ -67,11 +73,13 @@ class Cube(object):
                     data = pickle.load(f)
                 data_file_cache = True
                 data_done = True
+                if perfomance_logging:
+                    logger.info('Loaded from pickle')
 
         if not data_done:
             logger.info('Caches do not contain the data. Evaluating...')
             data = self.eval()
-            logger.info('Evaluated...')
+            logger.info('Evaluated')
             data_done = True
 
         # save to file cache
@@ -81,6 +89,8 @@ class Cube(object):
                 os.makedirs(Cube.checkpoints_dir)
             with open(pickle_name, 'wb') as f:
                 pickle.dump(data, f)
+            if perfomance_logging:
+                logger.info('Saved to pickle')
 
         if cleanup:
             if os.path.isfile(pickle_name):
@@ -90,6 +100,8 @@ class Cube(object):
         if not disable_inmemory_cache and not data_inmemory_cache and self.restorable:
             logger.debug('Save to inmemory cache')
             cache.Cache().add(key, data, do_not_copy = self.immutable_args) # Are we able to set do_not_copy here true in any case?
+            if perfomance_logging:
+                logger.info('Added to in-memory cache')
 
         return data
 

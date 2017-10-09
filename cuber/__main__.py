@@ -165,6 +165,7 @@ class Main():
             disable_inmemory_cache, disable_file_cache,
             frozens_id, create_frozens, use_frozens,
             cleanup,
+            perfomance_logging,
             ):
         self.workflow_file = workflow_file
         self.comment = comment
@@ -196,6 +197,7 @@ class Main():
                 disable_inmemory_cache = disable_inmemory_cache, 
                 disable_file_cache = disable_file_cache,
                 cleanup = cleanup,
+                perfomance_logging = perfomance_logging,
             )
 
             res = utils.dict_to_string(data, full = full_result)
@@ -258,10 +260,12 @@ def test_telegram():
 @click.option('--create_frozens', default = None, help = 'Create frozen points at subgraphs, where you specified "frozen": true')
 @click.option('--use_frozens', default = None)
 @click.option('--cleanup', default = False, is_flag=True)
+@click.option('--perfomance_logging', default = False, is_flag=True)
 def run(workflow_file, full_result, comment, main, graph_args, 
         disable_inmemory_cache, disable_file_cache,
         create_frozens, use_frozens,
         cleanup,
+        perfomance_logging,
         ):
     """
         Runs the workflow file (graph)
@@ -277,6 +281,7 @@ def run(workflow_file, full_result, comment, main, graph_args,
         create_frozens = create_frozens is not None,
         use_frozens = use_frozens is not None,
         cleanup = cleanup,
+        perfomance_logging = perfomance_logging,
     )
 
 @cli.command()
