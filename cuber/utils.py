@@ -5,8 +5,18 @@ import hashlib
 import numbers
 logger = logging.getLogger(__name__)
 
-def sha224(s):
-    return hashlib.sha224(s).hexdigest()
+override_default_hash_type = None
+
+def get_hash(s, hash_type = None):
+    assert isinstance(s, str)
+    if hash_type is None:
+        hash_type = override_default_hash_type if override_default_hash_type is not None else 'sha224'
+    if hash_type == 'sha224':
+        return hashlib.sha224(s).hexdigest()
+    if hash_type in ['murmur1_32', 'fast']:
+        import pyhash
+        return str(pyhash.murmur1_32()(s))
+    raise ValueError('Unknown hash type: {}'.format(hash_type))
 
 def object_hash(obj, fields = None):
     if fields is not None:
@@ -16,28 +26,27 @@ def object_hash(obj, fields = None):
     return universal_hash(d)
 
 def universal_hash(obj):
-    try:
-        return sha224(obj)
-    except:
-        if isinstance(obj, unicode):
-            return sha224(obj.encode('utf-8'))
-        if isinstance(obj, numbers.Number):
-            return sha224(repr(obj))
-        if isinstance(obj, dict):
-            return reduce(lambda x,y : universal_hash(x + y),
-                    sorted([universal_hash((universal_hash(key), universal_hash(value))) for key, value in obj.iteritems()]), 
-                    universal_hash('empty_dict_hash')
-                )
-        if isinstance(obj, tuple):
-            return reduce(lambda x,y : universal_hash(x + y), list(universal_hash(item) for item in obj), universal_hash('empty_array_hash'))
-        if isinstance(obj, list):
-            return universal_hash(tuple(obj))
-        if isinstance(obj, np.ndarray):
-            return sha224(obj.tostring())
-        if obj is None:
-            return sha224('none' + 'salt123')
-        logger.error('Unsupported type: {}'.format(type(obj))) 
-        raise NotImplementedError('Unspported type for hashing: {}. Object: {}'.format(type(obj), obj))
+    if isinstance(obj, str):
+        return get_hash(obj)
+    if isinstance(obj, unicode):
+        return get_hash(obj.encode('utf-8'))
+    if isinstance(obj, numbers.Number):
+        return get_hash(repr(obj))
+    if isinstance(obj, dict):
+        return reduce(lambda x,y : universal_hash(x + y),
+                sorted([universal_hash((universal_hash(key), universal_hash(value))) for key, value in obj.iteritems()]), 
+                universal_hash('empty_dict_hash')
+            )
+    if isinstance(obj, tuple):
+        return reduce(lambda x,y : universal_hash(x + y), list(universal_hash(item) for item in obj), universal_hash('empty_array_hash'))
+    if isinstance(obj, list):
+        return universal_hash(tuple(obj))
+    if isinstance(obj, np.ndarray):
+        return get_hash(obj.tostring())
+    if obj is None:
+        return get_hash('none' + 'salt123')
+    logger.error('Unsupported type: {}'.format(type(obj))) 
+    raise NotImplementedError('Unspported type for hashing: {}. Object: {}'.format(type(obj), obj))
 
 def json_hash(obj):
     raise NotImplementedError('Do not use json hashing, beacuse it is not pure. The order of dict`s keys is not totally specified. You may simple replace json_hash to univrsal_hash')

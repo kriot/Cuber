@@ -242,6 +242,8 @@ def cli(logging, debug):
         debug_logging = debug,
     )
 
+    utils.override_default_hash_type = config.get('cuber', 'hash_type', fallback = None)
+
 @cli.command()
 def test_telegram():
     """

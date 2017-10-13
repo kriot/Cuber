@@ -14,12 +14,15 @@ You are able to specify config with `.cuber` file in current (`cd`) directory.
 
 * Specifeing checkpoints folder makes you able to use checkpoints in common. It is usefull for server-based development of ML.
 * Message delay: cuber will send message if graph is done or failed, but only if there is `message_delay` minutes form start. It is useful for not-spamming at testing.
+* Hash function to use as base for `universal_hash`
 
 Example:
 ```
 [cuber]
 checkpoints_dir = /olo/common/checkpoints_for_our_common_project
 message_delay = 3
+hash_type = sha224
+
 [telegram]
 token = ...
 chat_id = ...
