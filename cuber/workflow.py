@@ -71,7 +71,6 @@ class Workflow():
 
         self.graph_args = self.graph.get('def_vars', {})
         self.graph_args.update(graph_args)
-        logger.debug('Graph args: {}'.format(graph_args))
 
     def get_graph(self, name):
         return self.graph[name]
