@@ -4,6 +4,24 @@
 
 # Usage
 * Create your cubes and other files (per project)
+# Installation
+The package dependce on `GPy` and `GPyOpt`. This packages require:
+```
+apt-get install python-tk
+pip install GPy # here not all depencies are presented, so you have to intstall packges manually
+pip install GPyOpt # too
+``` 
+```
+pip install cuber
+```
+
+If you want to use fast hashing (`hash_type = fast` or `hash_type = murmur1_32`):
+```
+apt-get install libboost-all-dev # dep of pyhash
+pip install pyhash
+```
+[https://github.com/flier/pyfasthash](pyhash)
+
 * Configure workflow via graph (create separate .wf file per configuration)
 * Run configuration: `python -m cuber run your_graph.wf` from dirctory of project (it is important, becuase it imports your modules)
 
