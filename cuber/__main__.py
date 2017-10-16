@@ -10,6 +10,8 @@ import sqlite3
 import datetime
 import json
 import commentjson
+import os
+import datetime
 
 import workflow
 import cube
@@ -22,18 +24,29 @@ logging.basicConfig(level=logging.INFO,
 
 # TODO: save to db: graph_args, main graph, important flag, run string
 
-def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logging = False):
+def setup_logging(tg_chat, tg_token, file_logging = True, disable_existing_loggers = True, debug_logging = False):
     if tg_chat is not None:
         tg_chat = int(tg_chat)
+
+    log_dir = './logs/'
 
     logging_handlers = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'console'
-        },
+        }
     }
 
     logging_level = 'DEBUG' if debug_logging else 'INFO'
+
+    if file_logging:
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
+        logging_handlers['file'] = {
+            'class': 'logging.FileHandler',
+            'formatter': 'console',
+            'filename': os.path.join(log_dir, '{}.log'.format(datetime.datetime.now().isoformat('_'))),
+        }
 
     if tg_chat is not None:
         logging_handlers['telegram'] = {
@@ -50,7 +63,7 @@ def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logg
         "loggers": {
             "": {
                 "level": logging_level,
-                "handlers": ['console'] + (['telegram'] if tg_chat is not None else []),
+                "handlers": ['console'] + (['telegram'] if tg_chat is not None else []) + (['file'] if file_logging else []),
                 "propagate": "no"
             }
         },
@@ -238,6 +251,7 @@ def cli(logging, debug):
     setup_logging(
         config.get('telegram', 'chat_id', fallback = None),
         config.get('telegram', 'token', fallback = None),
+        file_logging = config.get('cuber', 'file_logging', fallback = False),
         disable_existing_loggers = not logging,
         debug_logging = debug,
     )
