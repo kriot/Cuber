@@ -2,8 +2,6 @@
 ## Для чего нужен
 Пусть у вас есть процесс, который декомпозируется на несколько этапов. Может быть, вы хотите менять одни этапы на другие, наблюдая за измением результата. Тогда вы можете обернуть свой процесс в кубики (cube.Cube) и задвать расчет графом на этих кубиках. Пеперь, конфигурация всей системы будет задавать исключительно одним файлом, что позволит избежать проблем со слежкой за ыерсиями (это особенно важно, если в комнде несколько человек или вы делаете большие перерывы в разработке). Так же, система будет кешировать результаты, поэтому кубик не будет счиаться дважды на одних и тех же данных.
 
-# Usage
-* Create your cubes and other files (per project)
 # Installation
 The package dependce on `GPy` and `GPyOpt`. This packages require:
 ```
@@ -22,6 +20,8 @@ pip install pyhash
 ```
 [https://github.com/flier/pyfasthash](pyhash)
 
+# Usage
+* Create your cubes and other files (per project)
 * Configure workflow via graph (create separate .wf file per configuration)
 * Run configuration: `python -m cuber run your_graph.wf` from dirctory of project (it is important, becuase it imports your modules)
 
