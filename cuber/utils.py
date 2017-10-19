@@ -3,6 +3,7 @@ import json
 import numpy as np
 import hashlib
 import numbers
+import pickle
 logger = logging.getLogger(__name__)
 
 override_default_hash_type = None
@@ -26,6 +27,9 @@ def object_hash(obj, fields = None):
     return universal_hash(d)
 
 def universal_hash(obj):
+    if override_default_hash_type == 'pickle':
+        return hashlib.md5(pickle.dumps(obj)).hexdigest()
+        
     if isinstance(obj, str):
         return get_hash(obj)
     if isinstance(obj, unicode):
