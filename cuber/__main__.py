@@ -176,7 +176,7 @@ class Main():
 
     def run_graph(self, workflow_file, full_result, comment, main, graph_args, 
             disable_inmemory_cache, disable_file_cache,
-            frozens_id, create_frozens, use_frozens,
+            frozens_id, create_frozens, use_frozens, use_frozen_only_if_exists,
             cleanup,
             perfomance_logging,
             ):
@@ -203,6 +203,7 @@ class Main():
                 frozens_id = frozens_id,
                 create_frozens = create_frozens,
                 use_frozens = use_frozens,
+                use_frozen_only_if_exists = use_frozen_only_if_exists,
             )
 
             self.db_update_status('running')
@@ -277,15 +278,18 @@ def test_telegram():
 @click.option('--use_frozens', default = None)
 @click.option('--cleanup', default = False, is_flag=True)
 @click.option('--perfomance_logging', default = False, is_flag=True)
+@click.option('--use_frozen_only_if_exists', default = False, is_flag=True)
 def run(workflow_file, full_result, comment, main, graph_args, 
         disable_inmemory_cache, disable_file_cache,
-        create_frozens, use_frozens,
+        create_frozens, use_frozens, use_frozen_only_if_exists,
         cleanup,
         perfomance_logging,
         ):
     """
         Runs the workflow file (graph)
     """
+    if create_frozens is not None and use_frozens is not None:
+        assert create_frozens == use_frozens
     frozens_id = create_frozens if create_frozens is not None else use_frozens if use_frozens is not None else None
     Main().run_graph(workflow_file, full_result, 
         comment = comment, 
@@ -296,6 +300,7 @@ def run(workflow_file, full_result, comment, main, graph_args,
         frozens_id = frozens_id,
         create_frozens = create_frozens is not None,
         use_frozens = use_frozens is not None,
+        use_frozen_only_if_exists = use_frozen_only_if_exists,
         cleanup = cleanup,
         perfomance_logging = perfomance_logging,
     )

@@ -15,7 +15,7 @@ class GraphError(Exception):
 
 class Workflow():
     def __init__(self, workflow_file = None, graph = None, main = 'main', graph_args = {}, 
-            create_frozens = False, use_frozens = False,
+            create_frozens = False, use_frozens = False, use_frozen_only_if_exists = False,
             frozens_dir = './frozens/',
             frozens_id = None):
         '''
@@ -47,9 +47,10 @@ class Workflow():
         '''
         self.main = main
 
-        assert not (create_frozens and use_frozens)
+        assert not use_frozen_only_if_exists or use_frozens
         self.create_frozens = create_frozens
         self.use_frozens = use_frozens
+        self.use_frozen_only_if_exists = use_frozen_only_if_exists
 
         self.frozens_dir = frozens_dir
         if create_frozens or use_frozens:
@@ -162,7 +163,12 @@ class Workflow():
             logger.info('Frozen path: {}'.format(frozen_path))
             return frozen_path, frozen_path_dir
 
-        if utils.parse_bool(graph_.get('frozen', 'false')) and self.use_frozens:
+        if utils.parse_bool(graph_.get('frozen', 'false')) and self.use_frozens and \
+                 not os.path.isfile(get_frozen_path()[0]):
+            assert self.use_frozen_only_if_exists
+
+        if utils.parse_bool(graph_.get('frozen', 'false')) and self.use_frozens and \
+                os.path.isfile(get_frozen_path()[0]):
             logger.info('Loading from frozen')
             with open(get_frozen_path()[0], 'rb') as f:
                 return pickle.load(f)
