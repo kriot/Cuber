@@ -307,10 +307,16 @@ def run(workflow_file, full_result, comment, main, graph_args,
 
 @cli.command()
 @click.argument('pickle_file')
-def print_pickle(pickle_file):
+@click.option('--only_keys', default = False, is_flag=True)
+def print_pickle(pickle_file, only_keys):
     with open(pickle_file, 'rb') as f:
         data = pickle.load(f)
-    print data
+    if only_keys:
+        assert isinstance(data, dict)
+        for key in data:
+            print key
+    else:
+        print data
 
 @cli.command()
 @click.argument('pickle_file')
