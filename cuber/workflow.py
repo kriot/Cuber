@@ -11,7 +11,28 @@ import os.path
 logger = logging.getLogger(__name__)
 
 class GraphError(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+        
+class GraphErrorSpecifiedSubgraph(GraphError):
+    def __init__(self, message, subgraph):
+        self.message = message
+        self.subgraph = subgraph
+
+    def __str__(self):
+        return '{} at {}'.format(self.message, self.subgraph)
+        
+class GraphErrorSpecifiedDep(GraphErrorSpecifiedSubgraph):
+    def __init__(self, message, subgraph, dep):
+        self.message = message
+        self.subgraph = subgraph
+        self.dep = dep
+
+    def __str__(self):
+        return '{} at {} at {}'.format(self.message, self.subgraph, self.dep)
 
 class Workflow():
     def __init__(self, workflow_file = None, graph = None, main = 'main', graph_args = {}, 
@@ -47,7 +68,9 @@ class Workflow():
         '''
         self.main = main
 
-        assert not use_frozen_only_if_exists or use_frozens
+        if use_frozen_only_if_exists and not use_frozens:
+            raise GraphError('You may not specify use_frozens_only_if_exists without setting use_frozens')
+
         self.create_frozens = create_frozens
         self.use_frozens = use_frozens
         self.use_frozen_only_if_exists = use_frozen_only_if_exists
@@ -114,7 +137,7 @@ class Workflow():
                     if 'default' in value:
                         attrs_[key] = value['default']
                     else:
-                        raise ValueError('''Key {} is not specified in graph args and default value is not set (key "default"): 
+                        raise ValueError('''Key {} is not specified in graph args and default value is not set: 
                             attr: {}, 
                             graph_args: {}'''.format(graph_args_key, value, self.graph_args))
                 else:
@@ -225,6 +248,10 @@ class Workflow():
                         if attr_key in attrs:
                             logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
                             raise ValueError('Graph configuration error')
+                        if old_key not in res:
+                            raise GraphErrorSpecifiedDep('Field "{}" is not got from dependency. Got: {}'.format(old_key, ', '.join(res.keys())),
+                                subgraph = graph_['name'],
+                                dep = dep['name'])
                         attrs[attr_key] = res[old_key]
                     else:
                         if pack_to_dict not in attrs:
