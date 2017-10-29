@@ -77,7 +77,8 @@ class Workflow():
 
         self.frozens_dir = frozens_dir
         if create_frozens or use_frozens:
-            assert frozens_id is not None
+            if frozens_id is None:
+                raise GraphError('You want to create or use frzens but have not spcified frozens_id.')
         self.frozens_id = frozens_id 
 
 
@@ -106,13 +107,6 @@ class Workflow():
         else:
             return graph_
         
-    def __get_graph_id(self, graph_):
-        graph__ = self.__fold_graph(graph_)
-        if 'name' in graph__:
-            return graph__['name']
-        else:
-            return utils.universal_hash(graph__)
-
     def __substitute_graph_args(self, attrs):
         '''
         Attr format:
@@ -159,7 +153,6 @@ class Workflow():
         assert isinstance(expr, basestring)
         return eval(expr, self.graph_args)
 
-
     def __run_graph(self, graph_, disable_inmemory_cache, disable_file_cache, cleanup, perfomance_logging):
         '''
             TODO: improve excprions for incorrect graph
@@ -167,28 +160,31 @@ class Workflow():
         logger.debug('Graph to do: {}'.format(graph_))
         graph_ = self.__fold_graph(graph_)
 
-        # required fields
+        graph_descriptor = graph_['name'] if 'name' in graph_ else str(graph_)
+        graph_id = graph_['name'] if 'name' in graph_ else utils.universal_hash(graph_)
+
         for key in {'module', 'class'}:
-            assert key in graph_
+            if key not in graph_:
+                raise GraphErrorSpecifiedSubgraph('Cube description must have {} parameter.'.format(key),
+                    subgraph = graph_descriptor)
 
         for key in graph_.keys():
-            assert key in {'attrs', 'deps', 'class', 'module', 'comment', 'name', 'frozen',
+            graph_possible_params = {'attrs', 'deps', 'class', 'module', 'comment', 'name', 'frozen',
                 'disable_inmemory_cache', 'disable_file_cache'}
-
-        if 'name' not in graph_:
-            graph_['name'] = str(graph_)
-
-        assert isinstance(graph_['name'], basestring)
+            if key not in graph_possible_params:
+                raise GraphErrorSpecifiedSubgraph('Cube description has param {} that is not allowed. Check for typos. Possible values: {}' \
+                    .format(key, graph_possible_params), subgraph = graph_descriptor)
 
         def get_frozen_path():
-            frozen_path = os.path.join(self.frozens_dir, self.frozens_id, '{}.pkl'.format(self.__get_graph_id(graph_)))
+            frozen_path = os.path.join(self.frozens_dir, self.frozens_id, '{}.pkl'.format(graph_id))
             frozen_path_dir = os.path.join(self.frozens_dir, self.frozens_id)
             logger.info('Frozen path: {}'.format(frozen_path))
             return frozen_path, frozen_path_dir
 
         if utils.parse_bool(graph_.get('frozen', 'false')) and self.use_frozens and \
                  not os.path.isfile(get_frozen_path()[0]):
-            assert self.use_frozen_only_if_exists
+            if not self.use_frozen_only_if_exists:
+                raise GraphErrorSpecifiedSubgraph('Frozen {} does not exists, but frozens are enabled and flag "use_frozens_only_if_exists" is not enabled.'.format(get_frozen_path()[0]), subgraph = graph_descriptor)
 
         if utils.parse_bool(graph_.get('frozen', 'false')) and self.use_frozens and \
                 os.path.isfile(get_frozen_path()[0]):
@@ -199,16 +195,22 @@ class Workflow():
         attrs = copy.deepcopy(graph_.get('attrs', {}))
         attrs = self.__substitute_graph_args(attrs)
         for i, dep in enumerate(graph_.get('deps', {})):
+            dep_descriptor = dep['name'] if 'name' in dep else '{}-th dep (zero-based)'.format(i)
+
+            for key in {'graph'}:
+                if key not in dep:
+                    raise GraphErrorSpecifiedDep('Dep description must have {} parameter.'.format(key),
+                        subgraph = graph_descriptor, dep = dep_descriptor)
+
             for key in dep.keys():
-                assert key in {'fields', 'graph', 'prefix', 'comment', 'name', 'enable_if'}
-
-
-            if 'name' not in dep:
-                dep['name'] = '{}-th dep'.format(i)
+                dep_possible_params = {'fields', 'graph', 'prefix', 'comment', 'name', 'enable_if'}
+                if key not in dep_possible_params:
+                    raise GraphErrorSpecifiedDep('Dep description has param {} that is not allowed. Check for typos. Possible values: {}' \
+                        .format(key, dep_possible_params), subgraph = graph_descriptor, dep = dep_descriptor)
 
             if 'enable_if' in dep:
                 if not self.eval_expression(dep['enable_if']):
-                    logger.info('Skip dependecy "{}" because if clause is false'.format(dep['name']))
+                    logger.info('Skip dependecy "{}" of "{}" because if clause is false'.format(dep_descriptor, graph_descriptor))
                     continue
 
             res = self.__run_graph(dep['graph'], 
@@ -219,19 +221,15 @@ class Workflow():
                 )
 
             if not isinstance(res, dict):
-                raise GraphError((
-                    'You may not use non-dict-result cube as a dependency.\n'
-                    'Result data: {}\n'
-                    'Graph name: {}\n'
-                    'Dep name: {}'
-                    ).format(res, graph_['name'], dep['name']))
+                raise GraphErrorSpecifiedDep('You may not use non-dict-result cube as a dependency. Result data ({}): {}.' \
+                    .format(type(res), res), subgraph = graph_descriptor, dep = dep_descriptor)
 
             if 'fields' not in dep:
                 for key in res:
                     attr_key = dep.get('prefix', '') + key
                     if attr_key in attrs:
-                        logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
-                        raise ValueError('Graph configuration error')
+                        raise GraphErrorSpecifiedDep('Argument "{}" for is not unique.' \
+                            .format(attr_key), subgraph = graph_descriptor, dep = dep_descriptor)
                     attrs[attr_key] = res[key]
             else:
                 for new_key, old_key_ in dep['fields'].iteritems():
@@ -246,19 +244,21 @@ class Workflow():
                     
                     if pack_to_dict is None:
                         if attr_key in attrs:
-                            logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
-                            raise ValueError('Graph configuration error')
+                            raise GraphErrorSpecifiedDep('Argument "{}" for is not unique.' \
+                                .format(attr_key), subgraph = graph_descriptor, dep = dep_descriptor)
                         if old_key not in res:
                             raise GraphErrorSpecifiedDep('Field "{}" is not got from dependency. Got: {}'.format(old_key, ', '.join(res.keys())),
-                                subgraph = graph_['name'],
-                                dep = dep['name'])
+                                subgraph = graph_descriptor, dep = dep_descriptor)
                         attrs[attr_key] = res[old_key]
                     else:
                         if pack_to_dict not in attrs:
                             attrs[pack_to_dict] = {}
                         if attr_key in attrs[pack_to_dict]:
-                            logger.error('Parameter for cube is not unique: {} at graph:\n{}'.format(attr_key, graph_))
-                            raise ValueError('Graph configuration error')
+                            raise GraphErrorSpecifiedDep('Argument "{}" for is not unique for packing dict "{}".' \
+                                .format(attr_key, pack_to_dict), subgraph = graph_descriptor, dep = dep_descriptor)
+                        if old_key not in res:
+                            raise GraphErrorSpecifiedDep('Field "{}" is not got from dependency. Got: {}'.format(old_key, ', '.join(res.keys())),
+                                subgraph = graph_descriptor, dep = dep_descriptor)
                         attrs[pack_to_dict][attr_key] = res[old_key]
                         
 
