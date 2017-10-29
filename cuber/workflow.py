@@ -194,8 +194,9 @@ class Workflow():
 
         attrs = copy.deepcopy(graph_.get('attrs', {}))
         attrs = self.__substitute_graph_args(attrs)
-        for i, dep in enumerate(graph_.get('deps', {})):
-            dep_descriptor = dep['name'] if 'name' in dep else '{}-th dep (zero-based)'.format(i)
+        for i, dep_ in enumerate(graph_.get('deps', {})):
+            dep = dep_ if isinstance(dep_, dict) else {'graph': dep_}
+            dep_descriptor = dep['name'] if isinstance(dep, dict) and 'name' in dep else '{}-th dep (zero-based)'.format(i)
 
             for key in {'graph'}:
                 if key not in dep:
