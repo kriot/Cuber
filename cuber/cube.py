@@ -32,6 +32,16 @@ class Cube(object):
         '''
         return
 
+    def get_unique_file(self, filename):
+        '''
+            Generate filepath that is unique for pair (cube name (hash), filename).
+            Second call of the function from cube with same params returns the same path.
+        '''
+        work_dir = os.path.join(self.checkpoints_dir, self.name())
+        if not os.path.isdir(work_dir):
+            os.makedirs(work_dir)
+        return os.path.join(work_dir, filename)
+
     def get(self, disable_file_cache = False, disable_inmemory_cache = False, cleanup = False, perfomance_logging = False):
         '''
             Checks if there is a cached verison and loads it.
@@ -70,7 +80,7 @@ class Cube(object):
                 data_done = True
 
         # try load from file
-        pickle_name = os.path.join(Cube.checkpoints_dir, '{}.pkl'.format(key))
+        pickle_name = os.path.join(self.checkpoints_dir, '{}.pkl'.format(key))
         if not disable_file_cache and not data_done:
             logger.info('Pickle name: {}'.format(pickle_name))
             if os.path.isfile(pickle_name):
