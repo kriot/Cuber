@@ -38,6 +38,12 @@ class Cube(object):
             If there is no cached version, runs calcualtions via eval function.
             If you want to get cube's result, use only this function.
         '''
+        if not self.restorable:
+            logger.info('Cube is not resotrable. Evaluating...')
+            data = self.eval()
+            logger.info('Evaluated')
+            return data
+
         if perfomance_logging:
             logger.info('Getting data for {}'.format(self.__class__.__name__))
         key = self.name() # hashing make take some time
@@ -53,7 +59,7 @@ class Cube(object):
         data_file_cache = False
 
         # try load form memory
-        if not disable_inmemory_cache and not data_done and self.restorable:
+        if not disable_inmemory_cache and not data_done:
             cached, cached_data = cache.Cache().get(key, do_not_copy = self.immutable_args)
             if perfomance_logging:
                 logger.info('In-memory cache has answered: {}'.format('contains' if cached else 'does not contain'))
@@ -65,7 +71,7 @@ class Cube(object):
 
         # try load from file
         pickle_name = os.path.join(Cube.checkpoints_dir, '{}.pkl'.format(key))
-        if not disable_file_cache and not data_done and self.restorable:
+        if not disable_file_cache and not data_done:
             logger.info('Pickle name: {}'.format(pickle_name))
             if os.path.isfile(pickle_name):
                 logger.debug('Loading from file cache')
@@ -83,7 +89,7 @@ class Cube(object):
             data_done = True
 
         # save to file cache
-        if not disable_file_cache and not data_file_cache and self.restorable:
+        if not disable_file_cache and not data_file_cache:
             logger.debug('Save to file cache')
             if not os.path.isdir(Cube.checkpoints_dir):
                 os.makedirs(Cube.checkpoints_dir)
@@ -97,7 +103,7 @@ class Cube(object):
                 os.remove(pickle_name)
 
         # save to inmemory cache
-        if not disable_inmemory_cache and not data_inmemory_cache and self.restorable:
+        if not disable_inmemory_cache and not data_inmemory_cache:
             logger.debug('Save to inmemory cache')
             cache.Cache().add(key, data, do_not_copy = self.immutable_args) # Are we able to set do_not_copy here true in any case?
             if perfomance_logging:
