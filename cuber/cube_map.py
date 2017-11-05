@@ -14,13 +14,17 @@ class CubeMap(cube.Cube):
             apply_params = {}, 
             disable_inmemory_cache = False, 
             disable_file_cache = False, 
+            perfomance_logging = False,
             pass_original_items = False,
             **kwargs):
         self.workflow = workflow
         self.apply_params = apply_params
         self.array_field = array_field
+
         self.disable_inmemory_cache = utils.parse_bool(disable_inmemory_cache)
         self.disable_file_cache = utils.parse_bool(disable_file_cache)
+        self.perfomance_logging = utils.parse_bool(perfomance_logging)
+
         self.pass_original_items = utils.parse_bool(pass_original_items)
         self.kwargs = kwargs # data form dependency
 
@@ -45,6 +49,7 @@ class CubeMap(cube.Cube):
             res = wf.run(
                 disable_inmemory_cache = self.disable_inmemory_cache, 
                 disable_file_cache = self.disable_file_cache,
+                perfomance_logging = self.perfomance_logging,
             )
 # if we pass original items, these all have to be dicts
             assert (isinstance(res, dict) and isinstance(item, dict)) or not self.pass_original_items
