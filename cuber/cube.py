@@ -4,6 +4,7 @@ import os.path
 import logging
 
 import cache
+import utils
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +26,18 @@ class Cube(object):
     '''
     immutable_args = False
 
-    @abc.abstractmethod
     def name(self):
         '''
             Unique name for cube and params. This name is key for cache.
+            It could be overrited
         '''
-        return
+        version = self.__class__.version if 'version' in self.__class__.__dict__ else '0'
+        logger.info('Auto generated name. Keys: {}, version: {}'.format(self.__dict__.keys(), version))
+        return '{}_v{}_{}'.format(
+            self.__class__.__name__,
+            verison,
+            utils.universal_hash(self.__dict__)
+        )
 
     def get_unique_file(self, filename):
         '''
