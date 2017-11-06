@@ -35,7 +35,7 @@ class Cube(object):
         logger.info('Auto generated name. Keys: {}, version: {}'.format(self.__dict__.keys(), version))
         return '{}_v{}_{}'.format(
             self.__class__.__name__,
-            verison,
+            version,
             utils.universal_hash(self.__dict__)
         )
 
