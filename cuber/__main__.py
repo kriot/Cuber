@@ -12,6 +12,7 @@ import json
 import commentjson
 import os
 import datetime
+import sys
 
 import workflow
 import cube
@@ -22,6 +23,7 @@ logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s: %(asctime)s ::: %(name)s: %(message)s (%(filename)s:%(lineno)d)',
                                                 datefmt='%Y-%m-%d %H:%M:%S')
 
+logging_alias = logging
 # TODO: save to db: graph_args, main graph, important flag, run string
 
 def setup_logging(tg_chat, tg_token, file_logging = True, disable_existing_loggers = True, debug_logging = False):
@@ -77,6 +79,9 @@ def setup_logging(tg_chat, tg_token, file_logging = True, disable_existing_logge
         },
         'disable_existing_loggers': disable_existing_loggers,
     })
+
+def get_startup_command():
+    return ' '.join(sys.argv[1:])
 
 class Main():
     def __init__(self):
@@ -256,6 +261,8 @@ def cli(logging, debug):
         disable_existing_loggers = not logging,
         debug_logging = debug,
     )
+
+    logging_alias.info('Start up command: {}'.format(get_startup_command()))
 
     utils.override_default_hash_type = config.get('cuber', 'hash_type', fallback = None)
 
