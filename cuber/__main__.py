@@ -315,7 +315,8 @@ def run(workflow_file, full_result, comment, main, graph_args,
 @cli.command()
 @click.argument('pickle_file')
 @click.option('--only_keys', default = False, is_flag=True)
-def print_pickle(pickle_file, only_keys):
+@click.option('--key', default = None)
+def print_pickle(pickle_file, only_keys, key):
     with open(pickle_file, 'rb') as f:
         data = pickle.load(f)
     if only_keys:
@@ -323,7 +324,10 @@ def print_pickle(pickle_file, only_keys):
         for key in data:
             print key
     else:
-        print data
+        if key is None:
+            print data
+        else:
+            print data[key]
 
 @cli.command()
 @click.argument('pickle_file')
