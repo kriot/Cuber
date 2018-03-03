@@ -78,7 +78,16 @@ class Cube(object):
         '''
         return
 ```
+## Example cubes:
+```
+from cuber import decorator as cd
 
+@cd.to_cube(version = '1.0')
+def my_function(x, bias):
+    return {
+        'result': x * x + bias
+    }
+```
 # Workflow module
 This module parses graphs from `.wf` file and runs cubes. See `__main__.py` file for example.
 
