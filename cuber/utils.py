@@ -5,12 +5,10 @@ import hashlib
 import numbers
 logger = logging.getLogger(__name__)
 
-override_default_hash_type = None
-
 def get_hash(s, hash_type = None):
     assert isinstance(s, str)
     if hash_type is None:
-        hash_type = override_default_hash_type if override_default_hash_type is not None else 'sha224'
+        hash_type = 'sha224'
     if hash_type == 'sha224':
         return hashlib.sha224(s).hexdigest()
     if hash_type in ['murmur1_32', 'fast']:
