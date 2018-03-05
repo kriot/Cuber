@@ -10,27 +10,45 @@ import sqlite3
 import datetime
 import json
 import commentjson
+import os
+import datetime
+import sys
 
 import workflow
 import cube
 import hyper_optimizer
+import utils
 
 logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s: %(asctime)s ::: %(name)s: %(message)s (%(filename)s:%(lineno)d)',
                                                 datefmt='%Y-%m-%d %H:%M:%S')
 
-def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logging = False):
+logging_alias = logging
+# TODO: save to db: graph_args, main graph, important flag, run string
+
+def setup_logging(tg_chat, tg_token, file_logging = True, disable_existing_loggers = True, debug_logging = False):
     if tg_chat is not None:
         tg_chat = int(tg_chat)
+
+    log_dir = './logs/'
 
     logging_handlers = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'console'
-        },
+        }
     }
 
     logging_level = 'DEBUG' if debug_logging else 'INFO'
+
+    if file_logging:
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
+        logging_handlers['file'] = {
+            'class': 'logging.FileHandler',
+            'formatter': 'console',
+            'filename': os.path.join(log_dir, '{}.log'.format(datetime.datetime.now().isoformat('_'))),
+        }
 
     if tg_chat is not None:
         logging_handlers['telegram'] = {
@@ -47,7 +65,7 @@ def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logg
         "loggers": {
             "": {
                 "level": logging_level,
-                "handlers": ['console'] + (['telegram'] if tg_chat is not None else []),
+                "handlers": ['console'] + (['telegram'] if tg_chat is not None else []) + (['file'] if file_logging else []),
                 "propagate": "no"
             }
         },
@@ -62,10 +80,14 @@ def setup_logging(tg_chat, tg_token, disable_existing_loggers = True, debug_logg
         'disable_existing_loggers': disable_existing_loggers,
     })
 
+def get_startup_command():
+    return ' '.join(sys.argv[1:])
+
 class Main():
     def __init__(self):
 
         self.checkpoints_dir = config.get('cuber', 'checkpoints_dir', fallback = './checkpoints/')
+        self.frozens_dir = config.get('cuber', 'frozens_dir', fallback = './frozens/')
 
         self.setup_db()
 
@@ -108,7 +130,18 @@ class Main():
             (status, self.db_id)
         )
         self.db_connect.commit()
-        logging.info('DB: status updated')
+        logging.info('DB: status updated to {}'.format(status))
+
+    def db_update_comment(self, comment):
+        c = self.db_connect.cursor()
+        c.execute(
+        '''
+            UPDATE graphs SET comment = ? WHERE id = ?
+        ''',
+            (comment, self.db_id)
+        )
+        self.db_connect.commit()
+        logging.info('DB: comment updated')
 
     def db_save_result(self, result):
         c = self.db_connect.cursor()
@@ -121,12 +154,12 @@ class Main():
         self.db_connect.commit()
         logging.info('DB: result saved')
 
-    def db_show(self):
+    def db_show(self, filter_done = False):
         c = self.db_connect.cursor()
         res = c.execute(
         '''
-            SELECT id, file, start_time, status, comment FROM graphs
-        ''',
+            SELECT id, file, start_time, status, comment FROM graphs {}
+        '''.format('WHERE status = "done"' if filter_done else ''),
         )
         for row in res:
             print '\t'.join(map(str, row))
@@ -142,7 +175,16 @@ class Main():
         for row in res:
             print '\n'.join(map(str, row))
 
-    def run_graph(self, workflow_file, full_result, comment, disable_inmemory_cache, disable_file_cache):
+    def set_status_killed(self, graph_id):
+        self.db_id = graph_id
+        self.db_update_status('killed')
+
+    def run_graph(self, workflow_file, full_result, comment, main, graph_args, 
+            disable_inmemory_cache, disable_file_cache,
+            frozens_id, create_frozens, use_frozens, use_frozen_only_if_exists,
+            cleanup,
+            perfomance_logging,
+            ):
         self.workflow_file = workflow_file
         self.comment = comment
         start_time = time.time()
@@ -159,17 +201,25 @@ class Main():
         try:
             cube.Cube.checkpoints_dir = self.checkpoints_dir
             logging.info('Checkpoints dir: {}'.format(cube.Cube.checkpoints_dir))
-            wf = workflow.Workflow(workflow_file)
+            wf = workflow.Workflow(workflow_file, 
+                main = main, 
+                graph_args = graph_args,
+                frozens_dir = self.frozens_dir, 
+                frozens_id = frozens_id,
+                create_frozens = create_frozens,
+                use_frozens = use_frozens,
+                use_frozen_only_if_exists = use_frozen_only_if_exists,
+            )
 
             self.db_update_status('running')
-            data = wf.run(disable_inmemory_cache = disable_inmemory_cache, disable_file_cache = disable_file_cache)
+            data = wf.run(
+                disable_inmemory_cache = disable_inmemory_cache, 
+                disable_file_cache = disable_file_cache,
+                cleanup = cleanup,
+                perfomance_logging = perfomance_logging,
+            )
 
-            res = '{}:\n'.format(workflow_file)
-            for key, value in data.iteritems():
-                if full_result or isinstance(value, str) or isinstance(value, numbers.Number):
-                    res += '{}: {}\n'.format(key, value)
-                else:
-                    res += '{}: ...\n'.format(key)
+            res = utils.dict_to_string(data, full = full_result)
 
             if time.time() - start_time >= message_delay:
                 logging.critical('Calculation is done: {} (graph id: {})\n{}'.format(job_descritpion, self.db_id, res))
@@ -207,9 +257,12 @@ def cli(logging, debug):
     setup_logging(
         config.get('telegram', 'chat_id', fallback = None),
         config.get('telegram', 'token', fallback = None),
+        file_logging = config.get('cuber', 'file_logging', fallback = False),
         disable_existing_loggers = not logging,
         debug_logging = debug,
     )
+
+    logging_alias.info('Start up command: {}'.format(get_startup_command()))
 
 @cli.command()
 def test_telegram():
@@ -224,22 +277,63 @@ def test_telegram():
 @click.option('--disable_inmemory_cache', default = False, is_flag=True)
 @click.option('--disable_file_cache', default = False, is_flag=True)
 @click.option('--comment', default = '')
-def run(workflow_file, full_result, comment, disable_inmemory_cache, disable_file_cache):
+@click.option('--main', default = 'main', help = 'Name of graph, that will be evaluated.')
+@click.option('--graph_args', default = '{}', help = 'Json dict of params, that will be substituted at graph after `$` (`$alpha` and so on).')
+@click.option('--create_frozens', default = None, help = 'Create frozen points at subgraphs, where you specified "frozen": true')
+@click.option('--use_frozens', default = None)
+@click.option('--cleanup', default = False, is_flag=True)
+@click.option('--perfomance_logging', default = False, is_flag=True)
+@click.option('--use_frozen_only_if_exists', default = False, is_flag=True)
+def run(workflow_file, full_result, comment, main, graph_args, 
+        disable_inmemory_cache, disable_file_cache,
+        create_frozens, use_frozens, use_frozen_only_if_exists,
+        cleanup,
+        perfomance_logging,
+        ):
     """
         Runs the workflow file (graph)
     """
+    if create_frozens is not None and use_frozens is not None:
+        assert create_frozens == use_frozens
+    frozens_id = create_frozens if create_frozens is not None else use_frozens if use_frozens is not None else None
     Main().run_graph(workflow_file, full_result, 
         comment = comment, 
         disable_inmemory_cache = disable_inmemory_cache,
         disable_file_cache = disable_file_cache,    
+        graph_args = json.loads(graph_args),
+        main = main,
+        frozens_id = frozens_id,
+        create_frozens = create_frozens is not None,
+        use_frozens = use_frozens is not None,
+        use_frozen_only_if_exists = use_frozen_only_if_exists,
+        cleanup = cleanup,
+        perfomance_logging = perfomance_logging,
     )
 
 @cli.command()
 @click.argument('pickle_file')
-def print_pickle(pickle_file):
+@click.option('--only_keys', default = False, is_flag=True)
+@click.option('--key', default = None)
+def print_pickle(pickle_file, only_keys, key):
     with open(pickle_file, 'rb') as f:
         data = pickle.load(f)
-    print data
+    if only_keys:
+        assert isinstance(data, dict)
+        for key in data:
+            print key
+    else:
+        if key is None:
+            print data
+        else:
+            print data[key]
+
+@cli.command()
+@click.argument('pickle_file')
+@click.option('--content', default = '{}', required = True)
+def write_pickle(pickle_file, content):
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(json.loads(content), f)
+    logging.info('Done')
 
 @cli.command()
 @click.option('--opt_id', default = None)
@@ -312,11 +406,12 @@ def optimize_show(opt_id):
             print '\t'.join(map(str, row))
 
 @cli.command()
-def show():
+@click.option('--done', default = False, is_flag=True)
+def show(done):
     """
         Shows the graphs run history.
     """
-    Main().db_show()
+    Main().db_show(filter_done = done)
 
 @cli.command()
 @click.argument('graph_id')
@@ -325,6 +420,25 @@ def detailed(graph_id):
         Shows details of one of history graphs.
     """
     Main().db_show_detailed(graph_id)
+
+@cli.command()
+@click.argument('graph_id')
+def killed(graph_id):
+    """
+        Setup status 'killed' for graph. If you kill the process, it will not update status automatically, so it would be marked 'running'. 
+    """
+    Main().set_status_killed(graph_id)
+
+@cli.command()
+@click.argument('graph_id')
+@click.option('--comment', required = True)
+def update_comment(graph_id, comment):
+    """
+        Obviously, updates comment. 
+    """
+    m = Main()
+    m.db_id = graph_id
+    m.db_update_comment(comment)
 
 if __name__ == '__main__':
     cli()

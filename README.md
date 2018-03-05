@@ -2,6 +2,24 @@
 ## Для чего нужен
 Пусть у вас есть процесс, который декомпозируется на несколько этапов. Может быть, вы хотите менять одни этапы на другие, наблюдая за измением результата. Тогда вы можете обернуть свой процесс в кубики (cube.Cube) и задвать расчет графом на этих кубиках. Пеперь, конфигурация всей системы будет задавать исключительно одним файлом, что позволит избежать проблем со слежкой за ыерсиями (это особенно важно, если в комнде несколько человек или вы делаете большие перерывы в разработке). Так же, система будет кешировать результаты, поэтому кубик не будет счиаться дважды на одних и тех же данных.
 
+# Installation
+The package dependce on `GPy` and `GPyOpt`. This packages require:
+```
+apt-get install python-tk
+pip install GPy # here not all depencies are presented, so you have to intstall packges manually
+pip install GPyOpt # too
+``` 
+```
+pip install cuber
+```
+
+If you want to use fast hashing (`hash_type = fast` or `hash_type = murmur1_32`):
+```
+apt-get install libboost-all-dev # dep of pyhash
+pip install pyhash
+```
+[https://github.com/flier/pyfasthash](pyhash)
+
 # Usage
 * Create your cubes and other files (per project)
 * Configure workflow via graph (create separate .wf file per configuration)
@@ -14,12 +32,15 @@ You are able to specify config with `.cuber` file in current (`cd`) directory.
 
 * Specifeing checkpoints folder makes you able to use checkpoints in common. It is usefull for server-based development of ML.
 * Message delay: cuber will send message if graph is done or failed, but only if there is `message_delay` minutes form start. It is useful for not-spamming at testing.
+* Hash function to use as base for `universal_hash`
 
 Example:
 ```
 [cuber]
 checkpoints_dir = /olo/common/checkpoints_for_our_common_project
 message_delay = 3
+hash_type = sha224
+
 [telegram]
 token = ...
 chat_id = ...
@@ -57,7 +78,16 @@ class Cube(object):
         '''
         return
 ```
+## Example cubes:
+```
+from cuber import decorator as cd
 
+@cd.to_cube(version = '1.0')
+def my_function(x, bias):
+    return {
+        'result': x * x + bias
+    }
+```
 # Workflow module
 This module parses graphs from `.wf` file and runs cubes. See `__main__.py` file for example.
 

@@ -1,0 +1,100 @@
+{
+    "dataset":{
+        "module": "cube_split_train_test",
+        "class": "CubeSplitTrainTest",
+        "disable_inmemory_cache": "yes",
+        "attrs": {
+            "test_ratio": 0.3,
+            "seed": 0 // random seed
+        },
+        "deps": [
+            {
+                "graph": {
+                    "module": "cube_gen_data",
+                    "class": "CubeGenData",
+                    "attrs": {
+                        "a": 1.4,
+                        "b": 0.3,
+                        "noise": 1.0,
+                        "n": 40,
+                        "seed": 0
+                    }
+                }
+            }
+        ]
+    },
+    "trained_models": {
+        "module": "cube_train_model",
+        "class": "CubeTrainModel",
+        "name": "trained_model",
+        "attrs": {
+            "model_module": "linear_model",
+            "model_class": "LinearModel"
+        },
+        "deps": [
+            {
+                "fields": {
+                    "X": "X_train",
+                    "y": "y_train"
+                },
+                "graph": "dataset"
+            }
+        ]
+    },
+    "metrics_for_all_models": {
+        "module": "cuber.cube_map",
+        "class": "CubeMap",
+        "attrs": {
+            "array_field": "models",
+            "pass_original_items": true,
+            "workflow": {
+                "main": {
+                    "module": "cube_rmse",
+                    "class": "CubeRMSE",
+                    "attrs": {
+                        "real": "$y_test"
+                    },
+                    "deps": [
+                        {
+                            "fields": {
+                                "prediction": "prediction"
+                            },
+                            "graph": {
+                                "module": "cube_apply_model",
+                                "class": "CubeApplyModel",
+                                "attrs": {
+                                    "model_module": "$model_module",
+                                    "model_class": "$model_class",
+                                    "model_params": "$model_params",
+                                    "X": "$X_test"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "deps": [
+            {
+                "fields": {
+                    "X_test": {
+                        "source_field": "X_test",
+                        "pack_to_dict": "apply_params"
+                    },
+                    "y_test": {
+                        "source_field": "y_test",
+                        "pack_to_dict": "apply_params"
+                    }
+                },
+                "graph": "dataset"
+            },
+            {
+                "fields": {
+                    "models": "models"
+                },
+                "graph": "trained_models"
+            }
+        ]
+    },
+    "main": "metrics_for_all_models"
+}
