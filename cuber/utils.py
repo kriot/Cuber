@@ -52,10 +52,14 @@ def json_hash(obj):
 
 def dict_to_string(d, full = False, brackets = False):
     res = '{\n' if brackets else ''
-    for key, value in d.iteritems():
+    for key, value in sorted(d.items()):
         if full or isinstance(value, basestring) or isinstance(value, numbers.Number):
             res += '\t' if brackets else ''
             res += '{}: {}\n'.format(key, value)
+        elif isinstance(value, dict) and len(value) < 20 and not brackets:
+            sub_res = dict_to_string(value, full, brackets)
+            sub_res = '\n'.join(map(lambda x: '\t' + x, sub_res.split('\n')[:-1]))
+            res += '{}:\n{}\n'.format(key, sub_res)
         else:
             res += '\t' if brackets else ''
             res += '{}: ...\n'.format(key)
