@@ -15,6 +15,7 @@ class HyperOptimizerHandler():
     '''
     optimisation_params format:
     {
+        'target': 'auc_field'
         'vars': {
             var1: {
                 'bounds': [0.01, 1.5]
